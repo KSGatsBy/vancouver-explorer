@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app.db import init_db
-from app.routers import activities, itinerary
+from app.routers import activities, budget, itinerary
 
 FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
 
@@ -50,6 +50,7 @@ app.add_middleware(
 
 app.include_router(activities.router)
 app.include_router(itinerary.router)
+app.include_router(budget.router)
 
 
 @app.get("/health")

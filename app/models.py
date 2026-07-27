@@ -6,6 +6,14 @@ from pydantic import BaseModel, Field, field_validator
 DATE_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 
+def validate_iso_date(value: str) -> str:
+    """Reject anything that isn't a real YYYY-MM-DD calendar date."""
+    if not DATE_PATTERN.match(value):
+        raise ValueError("date must be YYYY-MM-DD")
+    date_type.fromisoformat(value)
+    return value
+
+
 class ActivityCreate(BaseModel):
     name: str = Field(min_length=1)
     location: str = Field(min_length=1)
@@ -45,10 +53,7 @@ class ItineraryEntryCreate(BaseModel):
     @field_validator("date")
     @classmethod
     def validate_date(cls, value: str) -> str:
-        if not DATE_PATTERN.match(value):
-            raise ValueError("date must be YYYY-MM-DD")
-        date_type.fromisoformat(value)
-        return value
+        return validate_iso_date(value)
 
 
 class ItineraryEntryPatch(BaseModel):
@@ -68,6 +73,20 @@ class ItineraryDayResponse(BaseModel):
     date: str
     group_size: int
     entries: list[ItineraryEntryResponse]
+    total_cost: float
+
+
+class BudgetDay(BaseModel):
+    date: str
+    group_size: int
+    entry_count: int
+    total_cost: float
+
+
+class BudgetWeekResponse(BaseModel):
+    start_date: str
+    end_date: str
+    days: list[BudgetDay]
     total_cost: float
 
 

@@ -10,8 +10,9 @@
       color: #1a1a2e;
       background: #f5f7fb;
     }
-    body { max-width: 960px; margin: 0 auto; padding: 1.5rem; }
+    body { max-width: 1040px; margin: 0 auto; padding: 1.5rem; }
     h1, h2 { margin-top: 0; }
+    h3 { margin-bottom: .25rem; font-size: 1rem; }
     section {
       background: #fff;
       border-radius: 10px;
@@ -24,16 +25,22 @@
       font: inherit;
       padding: .45rem .6rem;
       margin-top: .25rem;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
     }
     button {
       cursor: pointer;
       background: #2563eb;
       color: #fff;
       border: none;
-      border-radius: 6px;
       margin-top: .75rem;
     }
+    button:hover { background: #1d4ed8; }
     button.secondary { background: #64748b; }
+    button.secondary:hover { background: #475569; }
+    button.danger { background: transparent; color: #b91c1c; padding: .2rem .4rem; margin: 0; }
+    button.danger:hover { background: #fee2e2; }
+    button.small { font-size: .82rem; padding: .3rem .55rem; margin-top: .4rem; }
     .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
     .activity-card, .entry-card {
       border: 1px solid #e2e8f0;
@@ -41,6 +48,7 @@
       padding: .75rem;
       margin-top: .5rem;
     }
+    .card-head { display: flex; justify-content: space-between; align-items: start; gap: .5rem; }
     .tags { color: #64748b; font-size: .85rem; }
     .warning {
       background: #fef3c7;
@@ -50,9 +58,27 @@
       border-radius: 4px;
       font-size: .9rem;
     }
+    .warning.ok { background: #dcfce7; border-left-color: #22c55e; }
+    .warning.muted { background: #f1f5f9; border-left-color: #94a3b8; }
     .empty { color: #64748b; font-style: italic; }
     .meta { font-size: .85rem; color: #475569; }
-    @media (max-width: 720px) { .grid { grid-template-columns: 1fr; } }
+    .status { min-height: 1.2rem; font-size: .85rem; margin-top: .5rem; }
+    .status.error { color: #b91c1c; }
+    .status.ok { color: #15803d; }
+    .entry-edit { display: flex; gap: .5rem; align-items: end; flex-wrap: wrap; margin-top: .5rem; }
+    .entry-edit label { margin-top: 0; flex: 1 1 8rem; }
+    .entry-edit input, .entry-edit select { width: 100%; box-sizing: border-box; }
+    table { width: 100%; border-collapse: collapse; margin-top: .5rem; font-size: .9rem; }
+    th, td { text-align: left; padding: .45rem .5rem; border-bottom: 1px solid #e2e8f0; }
+    th { color: #475569; font-weight: 600; }
+    td.num, th.num { text-align: right; }
+    tr.total td { font-weight: 700; border-bottom: none; }
+    tr.blank td { color: #94a3b8; }
+    .filter-row { display: flex; gap: .5rem; align-items: end; }
+    .filter-row label { flex: 1; margin-top: 0; }
+    .filter-row input { width: 100%; box-sizing: border-box; }
+    .filter-row button { margin-top: 0; }
+    @media (max-width: 780px) { .grid { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
@@ -62,6 +88,14 @@
   <div class="grid">
     <section aria-labelledby="activities-heading">
       <h2 id="activities-heading">Activities</h2>
+
+      <div class="filter-row">
+        <label for="tag-filter">Filter by tags (comma-separated, matches any)
+          <input id="tag-filter" placeholder="free, outdoor">
+        </label>
+        <button id="clear-filter" class="secondary small" type="button">Clear</button>
+      </div>
+
       <div id="activity-list" class="empty">No activities yet.</div>
 
       <h3>Add Activity</h3>
@@ -74,13 +108,14 @@
         <label>Latitude <input name="lat" type="number" step="any" placeholder="49.3427"></label>
         <label>Longitude <input name="lng" type="number" step="any" placeholder="-123.1147"></label>
         <button type="submit">Add Activity</button>
+        <div id="activity-status" class="status" role="status"></div>
       </form>
     </section>
 
     <section aria-labelledby="itinerary-heading">
       <h2 id="itinerary-heading">Day Itinerary</h2>
       <label>Date <input id="itinerary-date" type="date" value="2026-08-01"></label>
-      <button id="load-itinerary" class="secondary">Load Itinerary</button>
+      <button id="load-itinerary" class="secondary" type="button">Load Itinerary</button>
 
       <div id="itinerary-summary" class="meta" style="margin-top: .75rem;"></div>
       <div id="itinerary-entries" class="empty">Select a date and load the itinerary.</div>
@@ -92,9 +127,17 @@
         </label>
         <label>Notes <textarea name="notes" rows="2" placeholder="bring the camera"></textarea></label>
         <button type="submit">Add Entry</button>
+        <div id="entry-status" class="status" role="status"></div>
       </form>
     </section>
   </div>
+
+  <section aria-labelledby="budget-heading">
+    <h2 id="budget-heading">Week Budget</h2>
+    <p class="meta">Seven days starting from the itinerary date above. Each day is
+      <code>sum(activity cost) &times; group size</code>.</p>
+    <div id="budget-table"><p class="empty">Load an itinerary to see the week's budget.</p></div>
+  </section>
 
   <script>
     const API = "";
@@ -107,6 +150,16 @@
       })[ch]);
     }
 
+    function money(value) {
+      return `$${Number(value ?? 0).toFixed(2)}`;
+    }
+
+    function setStatus(id, message, kind = "") {
+      const el = document.getElementById(id);
+      el.textContent = message;
+      el.className = `status ${kind}`;
+    }
+
     async function api(path, options = {}) {
       const res = await fetch(`${API}${path}`, {
         headers: { "Content-Type": "application/json", ...(options.headers || {}) },
@@ -114,105 +167,190 @@
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.detail || res.statusText);
+        throw new Error(typeof err.detail === "string" ? err.detail : res.statusText);
       }
       if (res.status === 204) return null;
       return res.json();
     }
 
+    function currentDate() {
+      return document.getElementById("itinerary-date").value;
+    }
+
+    // --- activities ---------------------------------------------------------
+
     function renderActivities(activities) {
       const list = document.getElementById("activity-list");
       const select = document.getElementById("activity-select");
+
       if (!activities.length) {
-        list.innerHTML = '<p class="empty">No activities yet.</p>';
+        list.innerHTML = '<p class="empty">No activities match.</p>';
         select.innerHTML = "";
         return;
       }
+
       list.innerHTML = activities.map(a => `
         <article class="activity-card">
-          <strong>${esc(a.name)}</strong>
-          <div class="meta">${esc(a.location)} · $${esc(a.cost ?? 0)} · ${a.is_outdoor ? "outdoor" : "indoor"}</div>
+          <div class="card-head">
+            <strong>${esc(a.name)}</strong>
+            <button class="danger" type="button" data-delete-activity="${esc(a.id)}"
+                    aria-label="Delete ${esc(a.name)}">&times;</button>
+          </div>
+          <div class="meta">${esc(a.location)} · ${esc(money(a.cost))} · ${a.is_outdoor ? "outdoor" : "indoor"}</div>
           <div class="tags">${esc((a.tags || []).join(", "))}</div>
         </article>
       `).join("");
+
       select.innerHTML = activities.map(a =>
         `<option value="${esc(a.id)}">${esc(a.name)}</option>`
       ).join("");
     }
 
+    async function loadActivities() {
+      const filter = document.getElementById("tag-filter").value.trim();
+      const query = filter ? `?tag=${encodeURIComponent(filter)}` : "";
+      renderActivities(await api(`/activities${query}`));
+    }
+
+    // --- itinerary ----------------------------------------------------------
+
     function renderItinerary(day, weather = []) {
       const container = document.getElementById("itinerary-entries");
       const summary = document.getElementById("itinerary-summary");
-      summary.textContent = `${day.date} · group size ${day.group_size} · total cost $${day.total_cost.toFixed(2)}`;
+      summary.textContent =
+        `${day.date} · group size ${day.group_size} · total cost ${money(day.total_cost)}`;
 
       if (!day.entries.length) {
         container.innerHTML = '<p class="empty">No entries for this day.</p>';
         return;
       }
 
-      const weatherByActivity = Object.fromEntries(
-        weather.map(w => [w.activity_id, w])
-      );
+      const weatherByActivity = Object.fromEntries(weather.map(w => [w.activity_id, w]));
 
       container.innerHTML = day.entries.map(entry => {
         const w = weatherByActivity[entry.activity_id];
         let warning = "";
         if (w && entry.activity.is_outdoor) {
           // rain_probability is a 0.0 placeholder when the forecast is unavailable.
-          const headline = w.source === "unavailable"
-            ? "No forecast available"
-            : `${Math.round(w.rain_probability * 100)}% rain expected`;
+          let headline, tone;
+          if (w.source === "unavailable") {
+            headline = "No forecast available";
+            tone = "muted";
+          } else {
+            const pct = Math.round(w.rain_probability * 100);
+            headline = `${pct}% rain expected`;
+            tone = pct >= 50 ? "" : "ok";
+          }
           const note = w.source === "cached" ? " (cached forecast)" : "";
-          warning = `<div class="warning" role="alert">
+          warning = `<div class="warning ${tone}" role="alert">
                ${esc(headline)} — ${esc(w.recommendation)}${esc(note)}
              </div>`;
         }
+
+        const ratingOptions = [1, 2, 3, 4, 5].map(n =>
+          `<option value="${n}"${entry.rating === n ? " selected" : ""}>${n}</option>`
+        ).join("");
+
         return `
           <article class="entry-card">
             <strong>${esc(entry.activity.name)}</strong>
-            <div class="meta">${esc(entry.notes || "No notes")}</div>
+            <div class="meta">${esc(entry.activity.location)} · ${esc(money(entry.activity.cost))}</div>
             ${warning}
+            <div class="entry-edit">
+              <label>Notes
+                <input type="text" data-notes="${esc(entry.id)}"
+                       value="${esc(entry.notes || "")}" placeholder="bring the camera">
+              </label>
+              <label>Rating
+                <select data-rating="${esc(entry.id)}">
+                  <option value=""${entry.rating == null ? " selected" : ""}>—</option>
+                  ${ratingOptions}
+                </select>
+              </label>
+              <button class="secondary small" type="button" data-save-entry="${esc(entry.id)}">Save</button>
+            </div>
           </article>
         `;
       }).join("");
     }
 
-    async function loadActivities() {
-      const activities = await api("/activities");
-      renderActivities(activities);
-      return activities;
-    }
-
     async function loadItinerary() {
-      const date = document.getElementById("itinerary-date").value;
+      const date = currentDate();
+      if (!date) return;
       try {
         const day = await api(`/itinerary/${date}`);
         let weather = [];
         try {
           weather = await api(`/itinerary/${date}/weather`);
         } catch (_) {
-          weather = [];
+          weather = [];  // weather is advisory; never block the itinerary view
         }
         renderItinerary(day, weather);
       } catch (err) {
         document.getElementById("itinerary-entries").innerHTML =
-          `<p class="empty">${err.message}</p>`;
+          `<p class="empty">${esc(err.message)}</p>`;
         document.getElementById("itinerary-summary").textContent = "";
       }
+      await loadBudget();
     }
+
+    // --- week budget --------------------------------------------------------
+
+    function renderBudget(budget) {
+      const rows = budget.days.map(day => `
+        <tr class="${day.entry_count ? "" : "blank"}">
+          <td>${esc(day.date)}</td>
+          <td class="num">${esc(day.entry_count)}</td>
+          <td class="num">${esc(day.group_size)}</td>
+          <td class="num">${esc(money(day.total_cost))}</td>
+        </tr>
+      `).join("");
+
+      document.getElementById("budget-table").innerHTML = `
+        <table>
+          <caption class="meta" style="text-align:left; padding-bottom:.35rem;">
+            ${esc(budget.start_date)} → ${esc(budget.end_date)}
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">Date</th>
+              <th scope="col" class="num">Entries</th>
+              <th scope="col" class="num">Group</th>
+              <th scope="col" class="num">Day total</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+          <tfoot>
+            <tr class="total">
+              <td colspan="3">Week total</td>
+              <td class="num">${esc(money(budget.total_cost))}</td>
+            </tr>
+          </tfoot>
+        </table>
+      `;
+    }
+
+    async function loadBudget() {
+      const date = currentDate();
+      if (!date) return;
+      try {
+        renderBudget(await api(`/budget/week/${date}`));
+      } catch (err) {
+        document.getElementById("budget-table").innerHTML =
+          `<p class="empty">${esc(err.message)}</p>`;
+      }
+    }
+
+    // --- events -------------------------------------------------------------
 
     document.getElementById("activity-form").addEventListener("submit", async (e) => {
       e.preventDefault();
       const fd = new FormData(e.target);
-      const tags = (fd.get("tags") || "")
-        .split(",")
-        .map(t => t.trim())
-        .filter(Boolean);
       const payload = {
         name: fd.get("name"),
         location: fd.get("location"),
         cost: fd.get("cost") ? Number(fd.get("cost")) : null,
-        tags,
+        tags: (fd.get("tags") || "").split(",").map(t => t.trim()).filter(Boolean),
         is_outdoor: fd.get("is_outdoor") === "on",
       };
       const lat = fd.get("lat");
@@ -221,30 +359,87 @@
         payload.lat = Number(lat);
         payload.lng = Number(lng);
       }
-      await api("/activities", { method: "POST", body: JSON.stringify(payload) });
-      e.target.reset();
-      await loadActivities();
+      try {
+        await api("/activities", { method: "POST", body: JSON.stringify(payload) });
+        e.target.reset();
+        setStatus("activity-status", "Activity added.", "ok");
+        await loadActivities();
+      } catch (err) {
+        setStatus("activity-status", err.message, "error");
+      }
+    });
+
+    document.getElementById("activity-list").addEventListener("click", async (e) => {
+      const button = e.target.closest("[data-delete-activity]");
+      if (!button) return;
+      const name = button.getAttribute("aria-label")?.replace(/^Delete /, "") || "this activity";
+      if (!confirm(`Delete "${name}"? It will also be removed from any day itineraries.`)) return;
+      try {
+        await api(`/activities/${button.dataset.deleteActivity}`, { method: "DELETE" });
+        setStatus("activity-status", "Activity deleted.", "ok");
+        await loadActivities();
+        await loadItinerary();
+      } catch (err) {
+        setStatus("activity-status", err.message, "error");
+      }
     });
 
     document.getElementById("entry-form").addEventListener("submit", async (e) => {
       e.preventDefault();
       const fd = new FormData(e.target);
-      const date = document.getElementById("itinerary-date").value;
-      await api("/itinerary-entries", {
-        method: "POST",
-        body: JSON.stringify({
-          date,
-          activity_id: Number(fd.get("activity_id")),
-          notes: fd.get("notes") || null,
-        }),
-      });
-      e.target.reset();
-      await loadItinerary();
+      const activityId = fd.get("activity_id");
+      if (!activityId) {
+        setStatus("entry-status", "Add an activity first.", "error");
+        return;
+      }
+      try {
+        await api("/itinerary-entries", {
+          method: "POST",
+          body: JSON.stringify({
+            date: currentDate(),
+            activity_id: Number(activityId),
+            notes: fd.get("notes") || null,
+          }),
+        });
+        e.target.reset();
+        setStatus("entry-status", "Entry added.", "ok");
+        await loadItinerary();
+      } catch (err) {
+        setStatus("entry-status", err.message, "error");
+      }
+    });
+
+    document.getElementById("itinerary-entries").addEventListener("click", async (e) => {
+      const button = e.target.closest("[data-save-entry]");
+      if (!button) return;
+      const id = button.dataset.saveEntry;
+      const rating = document.querySelector(`[data-rating="${id}"]`).value;
+      const payload = {
+        notes: document.querySelector(`[data-notes="${id}"]`).value || null,
+        rating: rating ? Number(rating) : null,
+      };
+      try {
+        await api(`/itinerary-entries/${id}`, {
+          method: "PATCH",
+          body: JSON.stringify(payload),
+        });
+        setStatus("entry-status", "Entry saved.", "ok");
+        await loadItinerary();
+      } catch (err) {
+        setStatus("entry-status", err.message, "error");
+      }
     });
 
     document.getElementById("load-itinerary").addEventListener("click", loadItinerary);
+    document.getElementById("itinerary-date").addEventListener("change", loadItinerary);
+    document.getElementById("tag-filter").addEventListener("input", loadActivities);
+    document.getElementById("clear-filter").addEventListener("click", () => {
+      document.getElementById("tag-filter").value = "";
+      loadActivities();
+    });
 
     loadActivities();
+    loadBudget();
   </script>
 </body>
 </html>

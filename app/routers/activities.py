@@ -111,5 +111,9 @@ def delete_activity(activity_id: int):
         ).fetchone()
         if not existing:
             raise HTTPException(status_code=404, detail="Activity not found")
+        # Cascade by hand: SQLite leaves foreign keys off by default, and an
+        # orphaned entry is invisible (the itinerary JOIN drops it) but still
+        # occupies a row.
+        conn.execute("DELETE FROM itinerary_entries WHERE activity_id = ?", (activity_id,))
         conn.execute("DELETE FROM activities WHERE id = ?", (activity_id,))
         conn.commit()

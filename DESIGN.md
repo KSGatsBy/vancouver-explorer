@@ -57,17 +57,21 @@ outdoor activity collides with bad weather on that day.
 ## Requirements
 
 ### Functional Requirements
-- [ ] CRUD for `Activity` (name, location, cost, tags, is_outdoor, lat/lng with
-      Vancouver-center default when omitted).
-- [ ] `GET /activities?tag=a,b` filters by OR logic across comma-separated tags.
-- [ ] Build day itineraries: `POST /itinerary-entries` auto-creates the
+- [x] CRUD for `Activity` (name, location, cost, tags, is_outdoor, lat/lng with
+      Vancouver-center default when omitted). Deleting an activity also removes
+      its itinerary entries (SQLite foreign keys are off by default, so the
+      cascade is explicit).
+- [x] `GET /activities?tag=a,b` filters by OR logic across comma-separated tags.
+- [x] Build day itineraries: `POST /itinerary-entries` auto-creates the
       `ItineraryDay` if it doesn't exist yet.
-- [ ] `GET /itinerary/{date}` returns entries plus `total_cost` for that day
+- [x] `GET /itinerary/{date}` returns entries plus `total_cost` for that day
       (`sum(entry.activity.cost) * group_size`).
-- [ ] `PATCH /itinerary-entries/{id}` to add rating/notes after visiting.
-- [ ] MCP tool `get_forecast(date, location)` returning condition + rain probability.
-- [ ] MCP tool `suggest_indoor_or_outdoor(date)` returning a per-activity
+- [x] `PATCH /itinerary-entries/{id}` to add rating/notes after visiting.
+- [x] MCP tool `get_forecast(date, location)` returning condition + rain probability.
+- [x] MCP tool `suggest_indoor_or_outdoor(date)` returning a per-activity
       recommendation list for every entry on that date.
+- [x] `GET /budget/week/{start_date}` returns per-day and whole-week cost totals
+      (Phase 3, Should tier).
 
 ### Non-Functional Requirements
 - **Performance:** Single-user local tool; no specific concurrency target beyond
@@ -162,8 +166,11 @@ itinerary_entries = """
 | PUT | /activities/{id} | Full-field overwrite of an activity |
 | DELETE | /activities/{id} | Delete an activity |
 | GET | /itinerary/{date} | Get a day's entries + computed `total_cost` |
+| GET | /itinerary/{date}/weather | Per-activity forecast + recommendation (via MCP) |
 | POST | /itinerary-entries | Add an entry; auto-creates the `ItineraryDay` if missing |
 | PATCH | /itinerary-entries/{id} | Update `notes` / `rating` after visiting |
+| GET | /budget/week/{start_date} | Per-day + week cost totals for 7 days from `start_date` |
+| GET | /health | Liveness check |
 
 ### MCP Server Design
 
@@ -221,10 +228,14 @@ project/
 - [x] Run Semgrep and fix findings (wildcard CORS → explicit local origins)
 
 ### Phase 3: Polish (Should/Could tier)
-- [ ] Budget totals per day/week (Should)
-- [ ] Map view of activities (Could)
-- [ ] Group voting on activities (Could)
-- [ ] Polish UI, write docs, prepare demo
+- [x] Budget totals per day/week (Should) — `GET /budget/week/{start_date}`
+      plus a week table in the frontend
+- [x] Polish UI, write docs, prepare demo — README.md added; frontend gained the
+      tag filter, activity delete, and rating/notes editing that the API already
+      supported but the UI could not reach
+- [ ] ~~Map view of activities (Could)~~ — descoped
+- [ ] ~~Group voting on activities (Could)~~ — descoped; needs new schema and
+      endpoints, and sits furthest from the weather × itinerary demo contract
 
 ## Testing Strategy
 
@@ -246,11 +257,20 @@ project/
 
 ## Security Considerations
 
-- [ ] Input validation on all endpoints (required fields, types, date format)
-- [ ] No hardcoded API keys (Open-Meteo needs none; env vars for anything future)
-- [ ] SQL parameterized queries (no string concatenation)
-- [ ] CORS configuration for local frontend access
-- [ ] Basic rate limiting / backoff on Open-Meteo calls
+- [x] Input validation on all endpoints (required fields, types, date format)
+- [x] No hardcoded API keys (Open-Meteo needs none; env vars for anything future)
+- [x] SQL parameterized queries (no string concatenation). Every statement is a
+      static string with bound parameters — the week budget uses a
+      `BETWEEN ? AND ?` range rather than a dynamically built `IN` clause, so no
+      query is assembled at runtime at all.
+- [x] CORS configuration for local frontend access (explicit localhost allowlist,
+      overridable via `ALLOWED_ORIGINS`; a `*` wildcard alongside
+      `allow_credentials` is both unsafe and invalid per the CORS spec)
+- [x] Exponential backoff + request de-duplication on Open-Meteo calls. Note this
+      is backoff and a short-lived response memo, **not** a true rate limiter —
+      there is no token bucket or QPS ceiling.
+- [x] Output escaping in the frontend — all user-supplied values pass through
+      `esc()` before being interpolated into `innerHTML`
 
 ## References
 

@@ -124,3 +124,30 @@ def test_delete_activity(client):
 def test_delete_activity_not_found(client):
     response = client.delete("/activities/999")
     assert response.status_code == 404
+
+
+def test_delete_activity_cascades_to_itinerary_entries(client):
+    """Deleting a scheduled activity must not leave orphaned entry rows behind."""
+    from app.db import get_connection
+
+    activity = client.post(
+        "/activities",
+        json={"name": "Capilano", "location": "North Vancouver", "cost": 65.0},
+    ).json()
+    client.post(
+        "/itinerary-entries",
+        json={"date": "2026-08-01", "activity_id": activity["id"]},
+    )
+
+    assert client.delete(f"/activities/{activity['id']}").status_code == 204
+
+    with get_connection() as conn:
+        remaining = conn.execute(
+            "SELECT COUNT(*) FROM itinerary_entries WHERE activity_id = ?",
+            (activity["id"],),
+        ).fetchone()[0]
+    assert remaining == 0
+
+    day = client.get("/itinerary/2026-08-01").json()
+    assert day["entries"] == []
+    assert day["total_cost"] == 0.0
