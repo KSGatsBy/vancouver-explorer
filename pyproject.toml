@@ -1,0 +1,19 @@
+[project]
+name = "vancouver-explorer"
+version = "0.1.0"
+requires-python = ">=3.12,<3.14"
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.32.0",
+    "pydantic>=2.0.0",
+    "httpx>=0.27.0",
+    "pytest>=8.0.0",
+    "mcp>=1.0.0",
+]
+
+[project.optional-dependencies]
+# Security scanning (DESIGN.md M2): `semgrep --config=p/default --config=p/security-audit app mcp-server frontend tests`
+dev = ["semgrep>=1.0.0"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

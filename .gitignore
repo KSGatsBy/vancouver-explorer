@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.db
+vancouver_explorer.db
+
+# Machine-local Claude Code settings (personal paths, not shared)
+.claude/settings.local.json

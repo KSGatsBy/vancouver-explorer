@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vancouver Summer Explorer</title>
+  <style>
+    :root {
+      font-family: system-ui, sans-serif;
+      color: #1a1a2e;
+      background: #f5f7fb;
+    }
+    body { max-width: 960px; margin: 0 auto; padding: 1.5rem; }
+    h1, h2 { margin-top: 0; }
+    section {
+      background: #fff;
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 1.25rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,.08);
+    }
+    label { display: block; margin-top: .5rem; font-size: .9rem; }
+    input, select, button, textarea {
+      font: inherit;
+      padding: .45rem .6rem;
+      margin-top: .25rem;
+    }
+    button {
+      cursor: pointer;
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      margin-top: .75rem;
+    }
+    button.secondary { background: #64748b; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .activity-card, .entry-card {
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: .75rem;
+      margin-top: .5rem;
+    }
+    .tags { color: #64748b; font-size: .85rem; }
+    .warning {
+      background: #fef3c7;
+      border-left: 4px solid #f59e0b;
+      padding: .5rem .75rem;
+      margin-top: .5rem;
+      border-radius: 4px;
+      font-size: .9rem;
+    }
+    .empty { color: #64748b; font-style: italic; }
+    .meta { font-size: .85rem; color: #475569; }
+    @media (max-width: 720px) { .grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <h1>Vancouver Summer Explorer</h1>
+  <p class="meta">Plan activities, build day itineraries, and get per-activity weather warnings.</p>
+
+  <div class="grid">
+    <section aria-labelledby="activities-heading">
+      <h2 id="activities-heading">Activities</h2>
+      <div id="activity-list" class="empty">No activities yet.</div>
+
+      <h3>Add Activity</h3>
+      <form id="activity-form">
+        <label>Name <input name="name" required placeholder="Capilano Suspension Bridge"></label>
+        <label>Location <input name="location" required placeholder="North Vancouver"></label>
+        <label>Cost (per person) <input name="cost" type="number" min="0" step="0.01"></label>
+        <label>Tags (comma-separated) <input name="tags" placeholder="outdoor, paid"></label>
+        <label><input name="is_outdoor" type="checkbox"> Outdoor activity</label>
+        <label>Latitude <input name="lat" type="number" step="any" placeholder="49.3427"></label>
+        <label>Longitude <input name="lng" type="number" step="any" placeholder="-123.1147"></label>
+        <button type="submit">Add Activity</button>
+      </form>
+    </section>
+
+    <section aria-labelledby="itinerary-heading">
+      <h2 id="itinerary-heading">Day Itinerary</h2>
+      <label>Date <input id="itinerary-date" type="date" value="2026-08-01"></label>
+      <button id="load-itinerary" class="secondary">Load Itinerary</button>
+
+      <div id="itinerary-summary" class="meta" style="margin-top: .75rem;"></div>
+      <div id="itinerary-entries" class="empty">Select a date and load the itinerary.</div>
+
+      <h3>Add to Itinerary</h3>
+      <form id="entry-form">
+        <label>Activity
+          <select name="activity_id" id="activity-select" required></select>
+        </label>
+        <label>Notes <textarea name="notes" rows="2" placeholder="bring the camera"></textarea></label>
+        <button type="submit">Add Entry</button>
+      </form>
+    </section>
+  </div>
+
+  <script>
+    const API = "";
+
+    // Activity names/notes are user-supplied and rendered via innerHTML below,
+    // so everything interpolated into markup must go through this first.
+    function esc(value) {
+      return String(value ?? "").replace(/[&<>"']/g, ch => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+      })[ch]);
+    }
+
+    async function api(path, options = {}) {
+      const res = await fetch(`${API}${path}`, {
+        headers: { "Content-Type": "application/json", ...(options.headers || {}) },
+        ...options,
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || res.statusText);
+      }
+      if (res.status === 204) return null;
+      return res.json();
+    }
+
+    function renderActivities(activities) {
+      const list = document.getElementById("activity-list");
+      const select = document.getElementById("activity-select");
+      if (!activities.length) {
+        list.innerHTML = '<p class="empty">No activities yet.</p>';
+        select.innerHTML = "";
+        return;
+      }
+      list.innerHTML = activities.map(a => `
+        <article class="activity-card">
+          <strong>${esc(a.name)}</strong>
+          <div class="meta">${esc(a.location)} · $${esc(a.cost ?? 0)} · ${a.is_outdoor ? "outdoor" : "indoor"}</div>
+          <div class="tags">${esc((a.tags || []).join(", "))}</div>
+        </article>
+      `).join("");
+      select.innerHTML = activities.map(a =>
+        `<option value="${esc(a.id)}">${esc(a.name)}</option>`
+      ).join("");
+    }
+
+    function renderItinerary(day, weather = []) {
+      const container = document.getElementById("itinerary-entries");
+      const summary = document.getElementById("itinerary-summary");
+      summary.textContent = `${day.date} · group size ${day.group_size} · total cost $${day.total_cost.toFixed(2)}`;
+
+      if (!day.entries.length) {
+        container.innerHTML = '<p class="empty">No entries for this day.</p>';
+        return;
+      }
+
+      const weatherByActivity = Object.fromEntries(
+        weather.map(w => [w.activity_id, w])
+      );
+
+      container.innerHTML = day.entries.map(entry => {
+        const w = weatherByActivity[entry.activity_id];
+        let warning = "";
+        if (w && entry.activity.is_outdoor) {
+          // rain_probability is a 0.0 placeholder when the forecast is unavailable.
+          const headline = w.source === "unavailable"
+            ? "No forecast available"
+            : `${Math.round(w.rain_probability * 100)}% rain expected`;
+          const note = w.source === "cached" ? " (cached forecast)" : "";
+          warning = `<div class="warning" role="alert">
+               ${esc(headline)} — ${esc(w.recommendation)}${esc(note)}
+             </div>`;
+        }
+        return `
+          <article class="entry-card">
+            <strong>${esc(entry.activity.name)}</strong>
+            <div class="meta">${esc(entry.notes || "No notes")}</div>
+            ${warning}
+          </article>
+        `;
+      }).join("");
+    }
+
+    async function loadActivities() {
+      const activities = await api("/activities");
+      renderActivities(activities);
+      return activities;
+    }
+
+    async function loadItinerary() {
+      const date = document.getElementById("itinerary-date").value;
+      try {
+        const day = await api(`/itinerary/${date}`);
+        let weather = [];
+        try {
+          weather = await api(`/itinerary/${date}/weather`);
+        } catch (_) {
+          weather = [];
+        }
+        renderItinerary(day, weather);
+      } catch (err) {
+        document.getElementById("itinerary-entries").innerHTML =
+          `<p class="empty">${err.message}</p>`;
+        document.getElementById("itinerary-summary").textContent = "";
+      }
+    }
+
+    document.getElementById("activity-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const tags = (fd.get("tags") || "")
+        .split(",")
+        .map(t => t.trim())
+        .filter(Boolean);
+      const payload = {
+        name: fd.get("name"),
+        location: fd.get("location"),
+        cost: fd.get("cost") ? Number(fd.get("cost")) : null,
+        tags,
+        is_outdoor: fd.get("is_outdoor") === "on",
+      };
+      const lat = fd.get("lat");
+      const lng = fd.get("lng");
+      if (lat && lng) {
+        payload.lat = Number(lat);
+        payload.lng = Number(lng);
+      }
+      await api("/activities", { method: "POST", body: JSON.stringify(payload) });
+      e.target.reset();
+      await loadActivities();
+    });
+
+    document.getElementById("entry-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const date = document.getElementById("itinerary-date").value;
+      await api("/itinerary-entries", {
+        method: "POST",
+        body: JSON.stringify({
+          date,
+          activity_id: Number(fd.get("activity_id")),
+          notes: fd.get("notes") || null,
+        }),
+      });
+      e.target.reset();
+      await loadItinerary();
+    });
+
+    document.getElementById("load-itinerary").addEventListener("click", loadItinerary);
+
+    loadActivities();
+  </script>
+</body>
+</html>
