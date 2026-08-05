@@ -10,8 +10,18 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 MCP_SERVER_SCRIPT = PROJECT_ROOT / "mcp-server" / "server.py"
 
 
+async def init_mcp_client() -> None:
+    pass
+
+
+async def close_mcp_client() -> None:
+    pass
+
+
 async def call_mcp_tool(tool_name: str, arguments: dict) -> str:
     env = os.environ.copy()
+    env["PYTHONUNBUFFERED"] = "1"
+    env["PYTHONIOENCODING"] = "utf-8"
     server_params = StdioServerParameters(
         command=sys.executable,
         args=[str(MCP_SERVER_SCRIPT)],

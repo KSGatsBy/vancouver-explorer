@@ -43,7 +43,7 @@ def get_db_path() -> Path:
 
 @contextmanager
 def get_connection():
-    conn = sqlite3.connect(get_db_path())
+    conn = sqlite3.connect(get_db_path(), timeout=10.0)
     conn.row_factory = sqlite3.Row
     try:
         yield conn
@@ -55,6 +55,24 @@ def init_db() -> None:
     with get_connection() as conn:
         conn.executescript(SCHEMA)
         conn.commit()
+    cleanup_duplicates()
+
+
+def cleanup_duplicates() -> int:
+    """Removes any duplicate itinerary entries (same day_id and activity_id), keeping the earliest entry."""
+    with get_connection() as conn:
+        cursor = conn.execute(
+            """
+            DELETE FROM itinerary_entries 
+            WHERE id NOT IN (
+                SELECT MIN(id) 
+                FROM itinerary_entries 
+                GROUP BY day_id, activity_id
+            )
+            """
+        )
+        conn.commit()
+        return cursor.rowcount
 
 
 def row_to_activity(row: sqlite3.Row) -> dict[str, Any]:

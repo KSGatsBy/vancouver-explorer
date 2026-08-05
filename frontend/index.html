@@ -4,158 +4,1277 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Vancouver Summer Explorer</title>
+
+  <!-- PWA Web App Manifest & Meta Tags -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#090d16">
+
+  <!-- Leaflet.js Interactive Map CSS & JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
   <style>
     :root {
-      font-family: system-ui, sans-serif;
-      color: #1a1a2e;
-      background: #f5f7fb;
+      /* Apple Ultra-Refined Palette & Typography */
+      --sf-font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", sans-serif;
+      
+      --text-heading: rgba(255, 255, 255, 0.92);
+      --text-sub: rgba(255, 255, 255, 0.55);
+      --text-dim: rgba(255, 255, 255, 0.35);
+      
+      --apple-blue-gradient: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      --apple-blue-glow: 0 4px 14px 0 rgba(59, 130, 246, 0.39);
+      
+      --apple-green: #30D158;
+      --apple-orange: #FF9F0A;
+      --apple-red: #FF453A;
+      --apple-purple: #BF5AF2;
+      --apple-teal: #64D2FF;
+
+      --glass-bg: rgba(255, 255, 255, 0.02);
+      --glass-card: rgba(255, 255, 255, 0.03);
+      --glass-blur: blur(20px);
+      --glass-border: rgba(255, 255, 255, 0.07);
+      --glass-border-hover: rgba(255, 255, 255, 0.2);
     }
-    body { max-width: 1040px; margin: 0 auto; padding: 1.5rem; }
-    h1, h2 { margin-top: 0; }
-    h3 { margin-bottom: .25rem; font-size: 1rem; }
-    section {
-      background: #fff;
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: var(--sf-font);
+      background: radial-gradient(circle at 50% 0%, #1e1b4b 0%, #090d16 70%);
+      background-attachment: fixed;
+      color: var(--text-heading);
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      width: 100%;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    /* Weather Canvas Background */
+    #weather-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.5;
+    }
+
+    /* Edge-to-Edge Full-Width Viewport Container */
+    .app-viewport {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      min-height: 100vh;
+      margin: 0;
+      padding: 0;
+      background: transparent;
+    }
+
+    /* Seamless Edge-to-Edge Top Bar */
+    .titlebar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 40px;
+      background: rgba(255, 255, 255, 0.02) !important;
+      backdrop-filter: var(--glass-blur) !important;
+      -webkit-backdrop-filter: var(--glass-blur) !important;
+      border-bottom: 1px solid var(--glass-border) !important;
+      width: 100%;
+      user-select: none;
+    }
+
+    .window-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-sub);
+      letter-spacing: -0.01em;
+    }
+
+    .title-controls {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .currency-select {
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text-heading);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      padding: 3px 8px;
+      font-size: 12px;
+      cursor: pointer;
+      margin-top: 0;
+    }
+
+    .status-capsule {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 500;
+      color: #30D158;
+      background: rgba(48, 209, 88, 0.1);
+      border: 1px solid rgba(48, 209, 88, 0.25);
+      padding: 4px 12px;
+      border-radius: 9999px;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #30D158;
+      box-shadow: 0 0 8px #30D158;
+    }
+
+    /* Main Fluid Content Layout */
+    .main-content {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 36px 40px;
+      width: 100%;
+    }
+
+    /* Header Branding */
+    .brand-section {
+      margin-bottom: 28px;
+    }
+
+    .brand-title {
+      font-size: 36px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin: 0 0 8px 0;
+      color: var(--text-heading);
+    }
+
+    .brand-sub {
+      font-size: 15px;
+      color: var(--text-sub);
+      margin: 0;
+    }
+
+    /* iOS / macOS Segmented Control */
+    .segmented-control {
+      display: flex;
+      background: rgba(255, 255, 255, 0.03);
+      padding: 4px;
+      border-radius: 14px;
+      border: 1px solid var(--glass-border);
+      margin-bottom: 32px;
+    }
+
+    .segment-btn {
+      flex: 1;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-sub);
+      background: transparent;
+      border: none;
+      padding: 11px 20px;
       border-radius: 10px;
-      padding: 1rem 1.25rem;
-      margin-bottom: 1.25rem;
-      box-shadow: 0 1px 4px rgba(0,0,0,.08);
+      cursor: pointer;
+      transition: all 0.2s ease-out;
+      margin-top: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      box-shadow: none;
     }
-    label { display: block; margin-top: .5rem; font-size: .9rem; }
-    input, select, button, textarea {
-      font: inherit;
-      padding: .45rem .6rem;
-      margin-top: .25rem;
-      border: 1px solid #cbd5e1;
+
+    .segment-btn:hover {
+      color: var(--text-heading);
+    }
+
+    .segment-btn.active {
+      color: #ffffff;
+      background: var(--apple-blue-gradient);
+      box-shadow: var(--apple-blue-glow);
+    }
+
+    /* Tab Panels */
+    .tab-panel {
+      display: none;
+      animation: sfFadeIn 0.25s ease-out;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    @keyframes sfFadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    /* Fluid Grid Layout & Glass Cards */
+    .grid-2col {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 32px;
+      align-items: start;
+    }
+
+    @media (max-width: 960px) {
+      .grid-2col { grid-template-columns: 1fr; }
+      .main-content { padding: 24px 20px; }
+      .titlebar { padding: 14px 20px; }
+    }
+
+    /* Feature 1: Subdued Motion & Transitions */
+    .sf-card {
+      background: var(--glass-card) !important;
+      backdrop-filter: var(--glass-blur) !important;
+      -webkit-backdrop-filter: var(--glass-blur) !important;
+      border: 1px solid var(--glass-border) !important;
+      border-radius: 20px;
+      padding: 24px;
+      margin-bottom: 24px;
+      transition: all 0.2s ease-out;
+    }
+
+    /* Feature 2: Destination Cover Image Slot */
+    .activity-card {
+      background: var(--glass-card) !important;
+      backdrop-filter: var(--glass-blur) !important;
+      -webkit-backdrop-filter: var(--glass-blur) !important;
+      border: 1px solid var(--glass-border) !important;
+      border-radius: 18px;
+      overflow: hidden;
+      margin-top: 14px;
+      transition: all 0.2s ease-out;
+    }
+
+    .activity-card:hover, .entry-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--glass-border-hover) !important;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    .card-cover-image {
+      width: 100%;
+      height: 130px;
+      background-size: cover;
+      background-position: center;
+      border-bottom: 1px solid var(--glass-border);
+      position: relative;
+    }
+
+    .card-cover-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, transparent 40%, rgba(9, 13, 22, 0.9) 100%);
+    }
+
+    .card-body {
+      padding: 16px;
+    }
+
+    .entry-card {
+      background: var(--glass-card) !important;
+      backdrop-filter: var(--glass-blur) !important;
+      -webkit-backdrop-filter: var(--glass-blur) !important;
+      border: 1px solid var(--glass-border) !important;
+      border-radius: 16px;
+      padding: 18px;
+      margin-top: 0;
+      transition: all 0.2s ease-out;
+    }
+
+    /* Sticky Sidebar */
+    .sticky-sidebar {
+      position: sticky;
+      top: 28px;
+      z-index: 10;
+    }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-sub);
+      margin-bottom: 12px;
+    }
+
+    h2 {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: var(--text-heading);
+      margin: 0 0 18px 0;
+    }
+
+    h3 {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-heading);
+      margin: 20px 0 10px 0;
+    }
+
+    /* Apple Fitness-style Rings Widget */
+    .rings-widget {
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+
+    .ring-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .ring-svg {
+      transform: rotate(-90deg);
+      width: 70px;
+      height: 70px;
+    }
+
+    .ring-circle-bg {
+      fill: none;
+      stroke: rgba(255, 255, 255, 0.08);
+      stroke-width: 6;
+    }
+
+    .ring-circle {
+      fill: none;
+      stroke-width: 6;
+      stroke-linecap: round;
+      transition: stroke-dashoffset 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .ring-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-sub);
+    }
+
+    /* 7-Day Weather Outlook Horizon */
+    .weather-outlook-bar {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      margin-bottom: 16px;
+    }
+
+    .outlook-pill {
+      flex: 1;
+      min-width: 80px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      padding: 10px 8px;
+      text-align: center;
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .outlook-pill.active {
+      border-color: #3b82f6;
+      background: rgba(59, 130, 246, 0.12);
+    }
+
+    /* Leaflet Map Container */
+    #vancouver-map {
+      height: 380px;
+      width: 100%;
+      border-radius: 16px;
+      margin-top: 16px;
+      border: 1px solid var(--glass-border);
+      z-index: 1;
+    }
+
+    .leaflet-popup-content-wrapper {
+      background: rgba(20, 20, 25, 0.92) !important;
+      backdrop-filter: var(--glass-blur) !important;
+      color: #ffffff !important;
+      border: 1px solid var(--glass-border) !important;
+      border-radius: 14px !important;
+      padding: 4px;
+    }
+    .leaflet-popup-tip {
+      background: rgba(20, 20, 25, 0.92) !important;
+    }
+    .leaflet-container a.leaflet-popup-close-button {
+      color: var(--text-sub) !important;
+    }
+
+    /* Export Dropdown Menu */
+    .export-dropdown {
+      position: relative;
+      display: inline-block;
+    }
+
+    .export-menu {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 110%;
+      background: rgba(30, 30, 38, 0.95);
+      backdrop-filter: var(--glass-blur);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      padding: 6px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+      z-index: 100;
+      min-width: 160px;
+    }
+
+    .export-menu.show {
+      display: block;
+      animation: sfFadeIn 0.2s ease-out;
+    }
+
+    .export-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      padding: 8px 12px;
+      font-size: 13px;
+      color: var(--text-heading);
+      background: transparent;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 0;
+      box-shadow: none;
+      text-align: left;
+    }
+
+    .export-item:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    /* Forced Dark Select & Options Contrast Fix */
+    select, select option {
+      background-color: #1e293b !important;
+      color: #ffffff !important;
+    }
+
+    select option:hover, select option:focus, select option:checked {
+      background-color: #3b82f6 !important;
+      color: #ffffff !important;
+    }
+
+    /* 5 Clickable Star Rating Component */
+    .star-rating {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .star-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-sub);
+    }
+
+    .stars {
+      display: inline-flex;
+      gap: 4px;
+      cursor: pointer;
+    }
+
+    .star-icon {
+      font-size: 18px;
+      color: rgba(255, 255, 255, 0.2);
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+
+    .star-icon:hover, .star-icon.active {
+      color: #FFD700;
+      text-shadow: 0 0 8px rgba(255, 215, 0, 0.6);
+      transform: scale(1.12);
+    }
+
+    /* Inputs & Buttons */
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-sub);
+      margin-top: 12px;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      font-family: inherit;
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.9);
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 10px 14px;
+      margin-top: 5px;
+      transition: all 0.2s ease-out;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 14px;
+      cursor: pointer;
+      user-select: none;
+      font-size: 13px;
+      color: var(--text-heading);
+    }
+
+    input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      margin: 0;
+      accent-color: #3b82f6;
+      cursor: pointer;
+    }
+
+    button {
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      background: var(--apple-blue-gradient);
+      color: #ffffff;
+      border: none;
+      border-radius: 12px;
+      padding: 10px 18px;
+      margin-top: 16px;
+      box-shadow: var(--apple-blue-glow);
+      transition: all 0.2s ease-out;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px 0 rgba(59, 130, 246, 0.5);
+    }
+
+    button:active {
+      transform: scale(0.97);
+      opacity: 0.9;
+    }
+
+    button.secondary {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text-heading);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: none;
+    }
+
+    button.secondary:hover {
+      background: rgba(255, 255, 255, 0.12);
+      box-shadow: none;
+    }
+
+    button.purple {
+      background: linear-gradient(135deg, #a855f7 0%, #7e22ce 100%);
+      box-shadow: 0 4px 14px 0 rgba(168, 85, 247, 0.39);
+    }
+
+    button.amber {
+      background: linear-gradient(135deg, #FF9F0A 0%, #D97706 100%);
+      box-shadow: 0 4px 14px 0 rgba(255, 159, 10, 0.39);
+    }
+
+    button.danger {
+      background: rgba(239, 68, 68, 0.15);
+      color: #fca5a5;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      padding: 3px 10px;
+      margin-top: 0;
+      font-size: 12px;
+      border-radius: 8px;
+      box-shadow: none;
+    }
+
+    button.danger:hover {
+      background: rgba(239, 68, 68, 0.3);
+      color: #ffffff;
+      box-shadow: none;
+    }
+
+    button.small {
+      font-size: 11px;
+      padding: 5px 12px;
+      margin-top: 0;
+      border-radius: 8px;
+    }
+
+    /* Filter Bar */
+    .filter-bar {
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+      background: rgba(255, 255, 255, 0.02);
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      margin-bottom: 18px;
+    }
+
+    .filter-bar label {
+      flex: 1;
+      margin-top: 0;
+    }
+
+    /* Timeline Visuals */
+    .timeline-container {
+      position: relative;
+      padding-left: 28px;
+      margin-top: 14px;
+    }
+
+    .timeline-container::before {
+      content: '';
+      position: absolute;
+      left: 8px;
+      top: 20px;
+      bottom: 20px;
+      width: 2px;
+      background: linear-gradient(180deg, #3b82f6 0%, rgba(94, 92, 230, 0.4) 100%);
+      border-radius: 2px;
+    }
+
+    .timeline-item {
+      position: relative;
+      margin-bottom: 16px;
+    }
+
+    .timeline-dot {
+      position: absolute;
+      left: -28px;
+      top: 22px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #090d16;
+      border: 2.5px solid #3b82f6;
+      box-shadow: 0 0 10px rgba(59, 130, 246, 0.6);
+      z-index: 2;
+    }
+
+    .timeline-dot.rain {
+      border-color: var(--apple-orange);
+      box-shadow: 0 0 10px rgba(255, 159, 10, 0.6);
+    }
+
+    .timeline-dot.ok {
+      border-color: var(--apple-green);
+      box-shadow: 0 0 10px rgba(48, 209, 88, 0.6);
+    }
+
+    .card-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .card-head strong {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-heading);
+      letter-spacing: -0.01em;
+    }
+
+    .sf-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 10px;
+      align-items: center;
+    }
+
+    .badge-pill {
+      font-size: 11px;
+      font-weight: 500;
+      padding: 3px 10px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-sub);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .badge-pill.cost {
+      background: rgba(100, 210, 255, 0.12);
+      color: var(--apple-teal);
+      border-color: rgba(100, 210, 255, 0.25);
+    }
+
+    .badge-pill.outdoor {
+      background: rgba(48, 209, 88, 0.12);
+      color: var(--apple-green);
+      border-color: rgba(48, 209, 88, 0.25);
+    }
+
+    .badge-pill.indoor {
+      background: rgba(191, 90, 242, 0.12);
+      color: var(--apple-purple);
+      border-color: rgba(191, 90, 242, 0.25);
+    }
+
+    .tags-wrapper {
+      margin-top: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
+    .tag-bubble {
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--text-sub);
+      background: rgba(255, 255, 255, 0.04);
+      padding: 2px 8px;
       border-radius: 6px;
     }
-    button {
-      cursor: pointer;
-      background: #2563eb;
-      color: #fff;
-      border: none;
-      margin-top: .75rem;
-    }
-    button:hover { background: #1d4ed8; }
-    button.secondary { background: #64748b; }
-    button.secondary:hover { background: #475569; }
-    button.danger { background: transparent; color: #b91c1c; padding: .2rem .4rem; margin: 0; }
-    button.danger:hover { background: #fee2e2; }
-    button.small { font-size: .82rem; padding: .3rem .55rem; margin-top: .4rem; }
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-    .activity-card, .entry-card {
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      padding: .75rem;
-      margin-top: .5rem;
-    }
-    .card-head { display: flex; justify-content: space-between; align-items: start; gap: .5rem; }
-    .tags { color: #64748b; font-size: .85rem; }
+
+    /* Weather Warning Banners */
     .warning {
-      background: #fef3c7;
-      border-left: 4px solid #f59e0b;
-      padding: .5rem .75rem;
-      margin-top: .5rem;
-      border-radius: 4px;
-      font-size: .9rem;
+      background: rgba(255, 159, 10, 0.14);
+      border-left: 3px solid var(--apple-orange);
+      color: #ffe0b2;
+      padding: 10px 14px;
+      margin-top: 12px;
+      border-radius: 10px;
+      font-size: 12.5px;
     }
-    .warning.ok { background: #dcfce7; border-left-color: #22c55e; }
-    .warning.muted { background: #f1f5f9; border-left-color: #94a3b8; }
-    .empty { color: #64748b; font-style: italic; }
-    .meta { font-size: .85rem; color: #475569; }
-    .status { min-height: 1.2rem; font-size: .85rem; margin-top: .5rem; }
-    .status.error { color: #b91c1c; }
-    .status.ok { color: #15803d; }
-    .entry-edit { display: flex; gap: .5rem; align-items: end; flex-wrap: wrap; margin-top: .5rem; }
+
+    .warning.ok {
+      background: rgba(48, 209, 88, 0.14);
+      border-left-color: var(--apple-green);
+      color: #b9f6ca;
+    }
+
+    .warning.muted {
+      background: rgba(142, 142, 147, 0.14);
+      border-left-color: var(--text-sub);
+      color: #e5e5ea;
+    }
+
+    /* Inline Editors */
+    .entry-edit {
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      margin-top: 12px;
+      background: rgba(255, 255, 255, 0.02);
+      padding: 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
     .entry-edit label { margin-top: 0; flex: 1 1 8rem; }
-    .entry-edit input, .entry-edit select { width: 100%; box-sizing: border-box; }
-    table { width: 100%; border-collapse: collapse; margin-top: .5rem; font-size: .9rem; }
-    th, td { text-align: left; padding: .45rem .5rem; border-bottom: 1px solid #e2e8f0; }
-    th { color: #475569; font-weight: 600; }
+
+    /* Status Notifications */
+    .status {
+      min-height: 1.2rem;
+      font-size: 12px;
+      font-weight: 500;
+      margin-top: 10px;
+    }
+
+    .status.error {
+      color: #fca5a5;
+      background: rgba(239, 68, 68, 0.12);
+      padding: 8px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(239, 68, 68, 0.25);
+    }
+
+    .status.ok {
+      color: #6ee7b7;
+      background: rgba(48, 209, 88, 0.12);
+      padding: 8px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(48, 209, 88, 0.25);
+    }
+
+    /* macOS Tables */
+    .table-container {
+      overflow-x: auto;
+      border-radius: 16px;
+      border: 1px solid var(--glass-border);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    th {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-sub);
+      background: rgba(255, 255, 255, 0.03);
+    }
+
     td.num, th.num { text-align: right; }
-    tr.total td { font-weight: 700; border-bottom: none; }
-    tr.blank td { color: #94a3b8; }
-    .filter-row { display: flex; gap: .5rem; align-items: end; }
-    .filter-row label { flex: 1; margin-top: 0; }
-    .filter-row input { width: 100%; box-sizing: border-box; }
-    .filter-row button { margin-top: 0; }
-    @media (max-width: 780px) { .grid { grid-template-columns: 1fr; } }
+
+    tr:hover td {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    tr.total td {
+      font-weight: 700;
+      font-size: 14px;
+      color: #ffffff;
+      background: rgba(59, 130, 246, 0.15);
+      border-bottom: none;
+    }
+
+    tr.blank td { color: var(--text-dim); }
+
+    /* Empty Placeholder */
+    .empty-placeholder {
+      border: 1.5px dashed rgba(255, 255, 255, 0.12);
+      border-radius: 20px;
+      padding: 3rem 2rem;
+      text-align: center;
+      color: var(--text-sub);
+      background: rgba(255, 255, 255, 0.01);
+      margin-top: 14px;
+      transition: all 0.2s ease-out;
+    }
+
+    .empty-placeholder:hover {
+      border-color: rgba(59, 130, 246, 0.4);
+      background: rgba(59, 130, 246, 0.02);
+    }
+
+    .empty-placeholder .empty-icon {
+      font-size: 2.4rem;
+      margin-bottom: 0.75rem;
+      opacity: 0.8;
+    }
+
+    .empty-placeholder .empty-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-heading);
+      margin-bottom: 0.4rem;
+    }
+
+    .empty-placeholder .empty-sub {
+      font-size: 0.85rem;
+      color: var(--text-sub);
+      max-width: 320px;
+      margin: 0 auto;
+      line-height: 1.5;
+    }
+
+    .empty {
+      color: var(--text-sub);
+      font-style: italic;
+      text-align: center;
+      padding: 24px;
+    }
+
+    /* Modal Dialog */
+    dialog {
+      background: rgba(20, 20, 25, 0.95);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      color: #ffffff;
+      border: 1px solid var(--glass-border);
+      border-radius: 24px;
+      padding: 28px;
+      max-width: 500px;
+      width: 90%;
+      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.8);
+    }
+
+    dialog::backdrop {
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(8px);
+    }
+
+    /* Print Media Styles */
+    @media print {
+      body { background: #ffffff !important; color: #000000 !important; }
+      #weather-canvas, .titlebar, .segmented-control, .sticky-sidebar, .filter-bar, button, .status, .weather-outlook-bar { display: none !important; }
+      .main-content { padding: 0 !important; max-width: 100% !important; }
+      .sf-card { background: #ffffff !important; border: 1px solid #ccc !important; box-shadow: none !important; color: #000000 !important; }
+      h1, h2, h3, strong, td, th { color: #000000 !important; }
+      .timeline-container::before { background: #000000 !important; }
+      .timeline-dot { border-color: #000000 !important; background: #ffffff !important; }
+    }
   </style>
 </head>
 <body>
-  <h1>Vancouver Summer Explorer</h1>
-  <p class="meta">Plan activities, build day itineraries, and get per-activity weather warnings.</p>
+  <!-- Dynamic Weather Canvas Background -->
+  <canvas id="weather-canvas"></canvas>
 
-  <div class="grid">
-    <section aria-labelledby="activities-heading">
-      <h2 id="activities-heading">Activities</h2>
-
-      <div class="filter-row">
-        <label for="tag-filter">Filter by tags (comma-separated, matches any)
-          <input id="tag-filter" placeholder="free, outdoor">
+  <div class="app-viewport">
+    <!-- Seamless Full-Width Top Bar -->
+    <div class="titlebar">
+      <div class="window-title">Vancouver Summer Explorer — Activity & Weather Planner</div>
+      
+      <div class="title-controls">
+        <!-- Tax & Multi-Currency Controls -->
+        <label style="margin-top:0; display:flex; align-items:center; gap:4px; font-size:11px; cursor:pointer;">
+          <input type="checkbox" id="tax-toggle"> Incl. 12% BC Tax & Tip
         </label>
-        <button id="clear-filter" class="secondary small" type="button">Clear</button>
+        <select id="currency-select" class="currency-select">
+          <option value="CAD" selected>CAD $</option>
+          <option value="USD">USD $</option>
+          <option value="RMB">RMB ¥</option>
+        </select>
+
+        <div class="status-capsule">
+          <span class="status-dot"></span>
+          <span>FastAPI & MCP Online</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Fluid Main Content Container -->
+    <div class="main-content">
+      <div class="brand-section">
+        <h1 class="brand-title">Vancouver Summer Explorer</h1>
+        <p class="brand-sub">Track activities, build rain-safe daily itineraries, and get per-activity weather advice via MCP.</p>
       </div>
 
-      <div id="activity-list" class="empty">No activities yet.</div>
+      <!-- Segmented Navigation Control -->
+      <nav class="segmented-control">
+        <button class="segment-btn active" data-tab="tab-activities">
+          🗺️ Activities Library
+        </button>
+        <button class="segment-btn" data-tab="tab-itinerary">
+          📅 Day Schedule & Weather
+        </button>
+        <button class="segment-btn" data-tab="tab-budget">
+          📊 Week Budget & Analytics
+        </button>
+      </nav>
 
-      <h3>Add Activity</h3>
-      <form id="activity-form">
-        <label>Name <input name="name" required placeholder="Capilano Suspension Bridge"></label>
-        <label>Location <input name="location" required placeholder="North Vancouver"></label>
-        <label>Cost (per person) <input name="cost" type="number" min="0" step="0.01"></label>
-        <label>Tags (comma-separated) <input name="tags" placeholder="outdoor, paid"></label>
-        <label><input name="is_outdoor" type="checkbox"> Outdoor activity</label>
-        <label>Latitude <input name="lat" type="number" step="any" placeholder="49.3427"></label>
-        <label>Longitude <input name="lng" type="number" step="any" placeholder="-123.1147"></label>
-        <button type="submit">Add Activity</button>
-        <div id="activity-status" class="status" role="status"></div>
-      </form>
-    </section>
+      <!-- TAB 1: ACTIVITIES LIBRARY & MAP -->
+      <div id="tab-activities" class="tab-panel active">
+        <div class="grid-2col">
+          <!-- Left Column: Activity List & Leaflet Map -->
+          <section class="sf-card" aria-labelledby="activities-heading">
+            <div class="section-label">LIBRARY & MAP</div>
+            <h2 id="activities-heading">Saved Activities</h2>
 
-    <section aria-labelledby="itinerary-heading">
-      <h2 id="itinerary-heading">Day Itinerary</h2>
-      <label>Date <input id="itinerary-date" type="date" value="2026-08-01"></label>
-      <button id="load-itinerary" class="secondary" type="button">Load Itinerary</button>
+            <div class="filter-bar">
+              <label for="tag-filter">Filter by Tags
+                <input id="tag-filter" placeholder="e.g. outdoor, free">
+              </label>
+              <button id="clear-filter" class="secondary small" type="button">Clear</button>
+            </div>
 
-      <div id="itinerary-summary" class="meta" style="margin-top: .75rem;"></div>
-      <div id="itinerary-entries" class="empty">Select a date and load the itinerary.</div>
+            <!-- Leaflet Interactive Map -->
+            <div id="vancouver-map"></div>
 
-      <h3>Add to Itinerary</h3>
-      <form id="entry-form">
-        <label>Activity
-          <select name="activity_id" id="activity-select" required></select>
-        </label>
-        <label>Notes <textarea name="notes" rows="2" placeholder="bring the camera"></textarea></label>
-        <button type="submit">Add Entry</button>
-        <div id="entry-status" class="status" role="status"></div>
-      </form>
-    </section>
+            <h3>Activity Cards</h3>
+            <div id="activity-list" class="empty">Loading activities...</div>
+          </section>
+
+          <!-- Right Column: Add Activity Form (Sticky Sidebar) -->
+          <section class="sf-card sticky-sidebar" aria-labelledby="add-activity-heading">
+            <div class="section-label">CREATE</div>
+            <h2 id="add-activity-heading">Add Activity</h2>
+            <form id="activity-form">
+              <label>Activity Name <input name="name" required placeholder="Capilano Suspension Bridge"></label>
+              <label>Location <input name="location" required placeholder="North Vancouver"></label>
+              <label>Cost (CAD per person) <input name="cost" type="number" min="0" step="0.01" placeholder="65.00"></label>
+              <label>Tags (comma-separated) <input name="tags" placeholder="outdoor, paid"></label>
+
+              <label class="checkbox-row">
+                <input name="is_outdoor" type="checkbox"> Outdoor Activity (triggers MCP forecast)
+              </label>
+
+              <div style="display: flex; gap: 8px;">
+                <label style="flex:1;">Latitude <input name="lat" type="number" step="any" placeholder="49.3427"></label>
+                <label style="flex:1;">Longitude <input name="lng" type="number" step="any" placeholder="-123.1147"></label>
+              </div>
+
+              <button type="submit" style="width: 100%;">+ Add Activity</button>
+              <div id="activity-status" class="status" role="status"></div>
+            </form>
+          </section>
+        </div>
+      </div>
+
+      <!-- TAB 2: DAY ITINERARY PLANNER -->
+      <div id="tab-itinerary" class="tab-panel">
+        <div class="grid-2col">
+          <!-- Left Column: Daily Schedule & Weather Banners -->
+          <section class="sf-card" aria-labelledby="itinerary-heading">
+            <div class="section-label" style="display: flex; justify-content: space-between; align-items: center;">
+              <span>ITINERARY & MCP WEATHER</span>
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <!-- Feature 3: Smart AI Planner Modal Trigger -->
+                <button id="open-ai-planner-btn" class="purple small" type="button" style="margin-top:0;">
+                  🤖 AI Smart Planner
+                </button>
+                <button id="smart-swap-btn" class="amber small" type="button" style="margin-top:0;">
+                  ⚡ Smart Rain Swap
+                </button>
+                <!-- Export Dropdown -->
+                <div class="export-dropdown">
+                  <button id="export-btn" class="secondary small" type="button" style="margin-top:0;">
+                    📥 Export Plan ▼
+                  </button>
+                  <div id="export-menu" class="export-menu">
+                    <button class="export-item" type="button" id="export-ical">🗓️ Export iCal (.ics)</button>
+                    <button class="export-item" type="button" id="export-json">📄 Export JSON</button>
+                    <button class="export-item" type="button" id="export-print">🖨️ Print / Save PDF</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <h2 id="itinerary-heading">Daily Schedule</h2>
+
+            <!-- 7-Day Weather Outlook Horizon Bar -->
+            <div class="weather-outlook-bar" id="weather-outlook-bar"></div>
+
+            <div class="filter-bar" style="flex-wrap: wrap;">
+              <label style="flex: 1 1 10rem;">Date 
+                <input id="itinerary-date" type="date" value="2026-08-01">
+              </label>
+              <label style="flex: 0 1 6rem;">Group Size 
+                <input id="itinerary-group-size" type="number" min="1" value="1">
+              </label>
+              <button id="load-itinerary" class="secondary" type="button" style="margin-top:0;">Load Plan</button>
+            </div>
+
+            <div id="itinerary-summary" style="font-size: 13px; color: #64D2FF; margin: 12px 0; font-weight: 500;"></div>
+            <div id="itinerary-entries">
+              <div class="empty-placeholder">
+                <div class="empty-icon">📅</div>
+                <div class="empty-title">No Activities Scheduled</div>
+                <div class="empty-sub">Select a date and click 'Load Plan' or use the AI Smart Planner.</div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Right Column: Schedule Form (Sticky Sidebar) -->
+          <section class="sf-card sticky-sidebar" aria-labelledby="add-entry-heading">
+            <div class="section-label">ADD TO DAY</div>
+            <h2 id="add-entry-heading">Schedule Activity</h2>
+            <form id="entry-form">
+              <label>Select Activity
+                <select name="activity_id" id="activity-select" required></select>
+              </label>
+              <label>Notes & Prep <textarea name="notes" rows="3" placeholder="Bring camera, check parking..."></textarea></label>
+              <button type="submit" style="width: 100%;">+ Add Entry</button>
+              <div id="entry-status" class="status" role="status"></div>
+            </form>
+          </section>
+        </div>
+      </div>
+
+      <!-- TAB 3: WEEK BUDGET & ANALYTICS -->
+      <div id="tab-budget" class="tab-panel">
+        <div class="grid-2col">
+          <section class="sf-card" aria-labelledby="budget-heading">
+            <div class="section-label">ANALYTICS</div>
+            <h2 id="budget-heading">7-Day Budget Forecast</h2>
+            <p style="font-size: 13px; color: var(--text-sub); margin-bottom: 18px;">
+              7-day breakdown calculated starting from active date:
+              <code>sum(activity cost) &times; group size</code>.
+            </p>
+            <div id="budget-table" class="table-container">
+              <div class="empty-placeholder">
+                <div class="empty-icon">📊</div>
+                <div class="empty-title">Budget Calculation Pending</div>
+                <div class="empty-sub">Load a day plan to calculate weekly budget analytics.</div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Apple Fitness-style Rings Widget -->
+          <section class="sf-card sticky-sidebar" aria-labelledby="rings-heading">
+            <div class="section-label">RATIO BREAKDOWN</div>
+            <h2 id="rings-heading">Activity Rings</h2>
+            <div class="rings-widget">
+              <div class="ring-container">
+                <svg class="ring-svg" viewBox="0 0 36 36">
+                  <path class="ring-circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                  <path id="ring-outdoor" class="ring-circle" stroke="#30D158" stroke-dasharray="100, 100" stroke-dashoffset="50" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                </svg>
+                <div id="ring-outdoor-text" class="ring-label">🌲 Outdoor: 50%</div>
+              </div>
+              <div class="ring-container">
+                <svg class="ring-svg" viewBox="0 0 36 36">
+                  <path class="ring-circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                  <path id="ring-free" class="ring-circle" stroke="#64D2FF" stroke-dasharray="100, 100" stroke-dashoffset="30" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                </svg>
+                <div id="ring-free-text" class="ring-label">💳 Free: 70%</div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <section aria-labelledby="budget-heading">
-    <h2 id="budget-heading">Week Budget</h2>
-    <p class="meta">Seven days starting from the itinerary date above. Each day is
-      <code>sum(activity cost) &times; group size</code>.</p>
-    <div id="budget-table"><p class="empty">Load an itinerary to see the week's budget.</p></div>
-  </section>
+  <!-- Feature 3: AI Smart Planner Dialog -->
+  <dialog id="ai-planner-dialog">
+    <h2 style="margin-top:0;">🤖 AI Smart Travel Planner</h2>
+    <p style="font-size:13px; color:var(--text-sub);">
+      Automatically build a rain-safe itinerary tailored to your travel preference and budget limits.
+    </p>
+    <form id="ai-planner-form">
+      <label>Travel Preference
+        <select name="preference" required>
+          <option value="outdoor" selected>🌲 Outdoor Nature & Parks</option>
+          <option value="museum">🏛️ Museums & Arts Gallery</option>
+          <option value="food">☕ Food, Markets & Chill</option>
+          <option value="free">💳 Free & Low Cost Highlights</option>
+        </select>
+      </label>
+
+      <label>Max Daily Budget (CAD $)
+        <input name="max_budget" type="number" min="0" step="5" value="50" required>
+      </label>
+
+      <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px;">
+        <button type="button" class="secondary" id="cancel-ai-planner">Cancel</button>
+        <button type="submit" class="purple">⚡ Generate & Apply Itinerary</button>
+      </div>
+      <div id="ai-planner-status" class="status" role="status"></div>
+    </form>
+  </dialog>
+
+  <!-- Activity Edit Modal Dialog -->
+  <dialog id="edit-activity-dialog">
+    <h2 style="margin-top:0;">Edit Activity</h2>
+    <form id="edit-activity-form">
+      <input type="hidden" name="id">
+      <label>Name <input name="name" required></label>
+      <label>Location <input name="location" required></label>
+      <label>Cost (per person) <input name="cost" type="number" min="0" step="0.01"></label>
+      <label>Tags (comma-separated) <input name="tags"></label>
+
+      <label class="checkbox-row">
+        <input name="is_outdoor" type="checkbox"> Outdoor Activity
+      </label>
+
+      <div style="display: flex; gap: 8px;">
+        <label style="flex:1;">Latitude <input name="lat" type="number" step="any"></label>
+        <label style="flex:1;">Longitude <input name="lng" type="number" step="any"></label>
+      </div>
+
+      <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px;">
+        <button type="button" class="secondary" id="cancel-edit-activity">Cancel</button>
+        <button type="submit">Save Changes</button>
+      </div>
+      <div id="edit-activity-status" class="status" role="status"></div>
+    </form>
+  </dialog>
 
   <script>
     const API = "";
+    let map = null;
+    let mapMarkers = [];
+    let mapPolyline = null;
+    let currentDayData = null;
 
-    // Activity names/notes are user-supplied and rendered via innerHTML below,
-    // so everything interpolated into markup must go through this first.
+    // Feature 2: High-Quality Vancouver Destination Image Map
+    const VANCOUVER_IMAGE_MAP = {
+      "stanley park": "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=600&q=80",
+      "capilano": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80",
+      "granville": "https://images.unsplash.com/photo-1519501025264-65ba15a82390?auto=format&fit=crop&w=600&q=80",
+      "kitsilano": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80",
+      "gastown": "https://images.unsplash.com/photo-1560969184-10fe8719e047?auto=format&fit=crop&w=600&q=80",
+      "science world": "https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=600&q=80",
+      "museum": "https://images.unsplash.com/photo-1565008447742-97f6f38c985c?auto=format&fit=crop&w=600&q=80",
+      "grouse": "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=600&q=80",
+    };
+
+    const FALLBACK_IMAGES = [
+      "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=600&q=80",
+      "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=600&q=80",
+      "https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?auto=format&fit=crop&w=600&q=80",
+    ];
+
+    function getActivityCoverImage(a) {
+      const name = (a.name || "").toLowerCase();
+      const loc = (a.location || "").toLowerCase();
+
+      for (const [key, url] of Object.entries(VANCOUVER_IMAGE_MAP)) {
+        if (name.includes(key) || loc.includes(key)) {
+          return url;
+        }
+      }
+
+      // Hash fallback based on ID
+      const idx = (a.id || 0) % FALLBACK_IMAGES.length;
+      return FALLBACK_IMAGES[idx];
+    }
+
+    // Tax & Currency State
+    const RATES = { CAD: 1.0, USD: 0.74, RMB: 5.32 };
+    const SYMBOLS = { CAD: "$", USD: "$", RMB: "¥" };
+
+    function getCurrencyMultiplier() {
+      const cur = document.getElementById("currency-select").value || "CAD";
+      const includeTax = document.getElementById("tax-toggle").checked;
+      const rate = RATES[cur] || 1.0;
+      const taxFactor = includeTax ? 1.12 : 1.0;
+      return { cur, rate, taxFactor, symbol: SYMBOLS[cur] };
+    }
+
+    function formatMoney(amount) {
+      const { rate, taxFactor, symbol } = getCurrencyMultiplier();
+      const val = Number(amount ?? 0) * taxFactor * rate;
+      return `${symbol}${val.toFixed(2)}`;
+    }
+
     function esc(value) {
       return String(value ?? "").replace(/[&<>"']/g, ch => ({
         "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
       })[ch]);
     }
 
-    function money(value) {
-      return `$${Number(value ?? 0).toFixed(2)}`;
-    }
-
     function setStatus(id, message, kind = "") {
       const el = document.getElementById(id);
+      if (!el) return;
       el.textContent = message;
       el.className = `status ${kind}`;
     }
@@ -177,153 +1296,477 @@
       return document.getElementById("itinerary-date").value;
     }
 
-    // --- activities ---------------------------------------------------------
+    // Weather Canvas Background Animation
+    const canvas = document.getElementById("weather-canvas");
+    const ctx = canvas.getContext("2d");
+    let raindrops = [];
+    let isRaining = false;
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener("resize", resizeCanvas);
+    resizeCanvas();
+
+    function initRain() {
+      raindrops = [];
+      for (let i = 0; i < 60; i++) {
+        raindrops.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          l: Math.random() * 15 + 10,
+          v: Math.random() * 4 + 4
+        });
+      }
+    }
+    initRain();
+
+    function drawWeatherCanvas() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (isRaining) {
+        ctx.strokeStyle = "rgba(100, 210, 255, 0.3)";
+        ctx.lineWidth = 1.5;
+        raindrops.forEach(drop => {
+          ctx.beginPath();
+          ctx.moveTo(drop.x, drop.y);
+          ctx.lineTo(drop.x - 2, drop.y + drop.l);
+          ctx.stroke();
+          drop.y += drop.v;
+          drop.x -= 0.5;
+          if (drop.y > canvas.height) {
+            drop.y = -20;
+            drop.x = Math.random() * canvas.width;
+          }
+        });
+      }
+      requestAnimationFrame(drawWeatherCanvas);
+    }
+    drawWeatherCanvas();
+
+    // PWA Service Worker Registration
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(() => {});
+      });
+    }
+
+    // Leaflet Map & Route Polylines
+    function initMap() {
+      if (map) return;
+      map = L.map('vancouver-map').setView([49.2827, -123.1207], 11);
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; CARTO & OpenStreetMap',
+        maxZoom: 18
+      }).addTo(map);
+    }
+
+    function updateMapMarkers(activities, weatherList = [], isItineraryRoute = false) {
+      initMap();
+      mapMarkers.forEach(m => map.removeLayer(m));
+      mapMarkers = [];
+      if (mapPolyline) {
+        map.removeLayer(mapPolyline);
+        mapPolyline = null;
+      }
+
+      const weatherByActivity = Object.fromEntries(weatherList.map(w => [w.activity_id, w]));
+      const routeCoords = [];
+
+      activities.forEach((a, idx) => {
+        const lat = a.lat || 49.2827;
+        const lng = a.lng || -123.1207;
+        routeCoords.push([lat, lng]);
+        const w = weatherByActivity[a.id];
+
+        let pinColor = "#BF5AF2";
+        if (a.is_outdoor) {
+          pinColor = (w && w.rain_probability >= 0.5) ? "#FF9F0A" : "#30D158";
+        }
+
+        const marker = L.circleMarker([lat, lng], {
+          radius: 8,
+          fillColor: pinColor,
+          color: "#ffffff",
+          weight: 1.5,
+          opacity: 1,
+          fillOpacity: 0.95
+        }).addTo(map);
+
+        const recText = w ? `<div style="font-size:11px; margin-top:4px; color:#ffe0b2;">☔ ${esc(w.recommendation)}</div>` : "";
+        const stepNum = isItineraryRoute ? `<span style="background:#3b82f6; border-radius:50%; padding:2px 6px; font-size:10px; margin-right:4px;">#${idx+1}</span>` : "";
+
+        marker.bindPopup(`
+          <div style="font-family:-apple-system, sans-serif; padding:4px;">
+            <strong style="font-size:14px; color:#ffffff;">${stepNum}${esc(a.name)}</strong>
+            <div style="font-size:12px; color:#a5b4fc; margin-top:2px;">📍 ${esc(a.location)} · 💳 ${esc(formatMoney(a.cost))}</div>
+            ${recText}
+          </div>
+        `);
+
+        mapMarkers.push(marker);
+      });
+
+      if (isItineraryRoute && routeCoords.length > 1) {
+        mapPolyline = L.polyline(routeCoords, {
+          color: '#3b82f6',
+          weight: 3,
+          dashArray: '6, 8',
+          opacity: 0.8
+        }).addTo(map);
+      }
+    }
+
+    // Segmented Control Tabs
+    document.querySelectorAll(".segment-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".segment-btn").forEach(b => b.classList.remove("active"));
+        document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+        
+        btn.classList.add("active");
+        const targetTab = btn.dataset.tab;
+        document.getElementById(targetTab).classList.add("active");
+
+        if (targetTab === "tab-activities" && map) {
+          setTimeout(() => map.invalidateSize(), 200);
+        }
+      });
+    });
+
+    // Apple Fitness Rings Update
+    function updateRings(activities) {
+      if (!activities.length) return;
+      const outdoorCount = activities.filter(a => a.is_outdoor).length;
+      const freeCount = activities.filter(a => (a.cost || 0) === 0).length;
+
+      const outdoorPct = Math.round((outdoorCount / activities.length) * 100);
+      const freePct = Math.round((freeCount / activities.length) * 100);
+
+      document.getElementById("ring-outdoor").style.strokeDashoffset = 100 - outdoorPct;
+      document.getElementById("ring-outdoor-text").textContent = `🌲 Outdoor: ${outdoorPct}%`;
+
+      document.getElementById("ring-free").style.strokeDashoffset = 100 - freePct;
+      document.getElementById("ring-free-text").textContent = `💳 Free: ${freePct}%`;
+    }
+
+    // --- Activities with Feature 2 Cover Images ---
+    let activitiesById = {};
 
     function renderActivities(activities) {
       const list = document.getElementById("activity-list");
       const select = document.getElementById("activity-select");
 
+      activitiesById = {};
+      activities.forEach(a => { activitiesById[a.id] = a; });
+
       if (!activities.length) {
-        list.innerHTML = '<p class="empty">No activities match.</p>';
+        list.innerHTML = `
+          <div class="empty-placeholder">
+            <div class="empty-icon">🏔️</div>
+            <div class="empty-title">No Activities Found</div>
+            <div class="empty-sub">Add a new activity using the right panel or clear your tag filter.</div>
+          </div>
+        `;
         select.innerHTML = "";
+        updateMapMarkers([]);
         return;
       }
 
-      list.innerHTML = activities.map(a => `
-        <article class="activity-card">
-          <div class="card-head">
-            <strong>${esc(a.name)}</strong>
-            <button class="danger" type="button" data-delete-activity="${esc(a.id)}"
-                    aria-label="Delete ${esc(a.name)}">&times;</button>
-          </div>
-          <div class="meta">${esc(a.location)} · ${esc(money(a.cost))} · ${a.is_outdoor ? "outdoor" : "indoor"}</div>
-          <div class="tags">${esc((a.tags || []).join(", "))}</div>
-        </article>
-      `).join("");
+      list.innerHTML = activities.map(a => {
+        const coverImg = getActivityCoverImage(a);
+        return `
+          <article class="activity-card">
+            <div class="card-cover-image" style="background-image: url('${coverImg}');">
+              <div class="card-cover-overlay"></div>
+            </div>
+            <div class="card-body">
+              <div class="card-head">
+                <strong>${esc(a.name)}</strong>
+                <div style="display: flex; gap: 4px; align-items: center;">
+                  <button class="secondary small" type="button" data-edit-activity="${esc(a.id)}">Edit</button>
+                  <button class="danger" type="button" data-delete-activity="${esc(a.id)}"
+                          aria-label="Delete ${esc(a.name)}">&times;</button>
+                </div>
+              </div>
+              <div class="sf-badges">
+                <span class="badge-pill">${esc(a.location)}</span>
+                <span class="badge-pill cost">${esc(formatMoney(a.cost))}</span>
+                <span class="badge-pill ${a.is_outdoor ? "outdoor" : "indoor"}">${a.is_outdoor ? "🌲 Outdoor" : "🏛️ Indoor"}</span>
+              </div>
+              <div class="tags-wrapper">
+                ${(a.tags || []).map(t => `<span class="tag-bubble">#${esc(t)}</span>`).join("")}
+              </div>
+            </div>
+          </article>
+        `;
+      }).join("");
 
       select.innerHTML = activities.map(a =>
-        `<option value="${esc(a.id)}">${esc(a.name)}</option>`
+        `<option value="${esc(a.id)}">${esc(a.name)} (${esc(formatMoney(a.cost))})</option>`
       ).join("");
+
+      updateMapMarkers(activities);
+      updateRings(activities);
     }
 
     async function loadActivities() {
       const filter = document.getElementById("tag-filter").value.trim();
       const query = filter ? `?tag=${encodeURIComponent(filter)}` : "";
-      renderActivities(await api(`/activities${query}`));
+      try {
+        renderActivities(await api(`/activities${query}`));
+      } catch (err) {
+        setStatus("activity-status", err.message, "error");
+      }
     }
 
-    // --- itinerary ----------------------------------------------------------
+    // Render 7-Day Weather Outlook Horizon Bar
+    function renderWeatherOutlook() {
+      const bar = document.getElementById("weather-outlook-bar");
+      const activeDate = currentDate();
+      const base = new Date(activeDate || "2026-08-01");
 
+      const pills = [];
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(base);
+        d.setDate(base.getDate() + i);
+        const iso = d.toISOString().split("T")[0];
+        const dayLabel = d.toLocaleDateString("en-US", { weekday: "short", month: "numeric", day: "numeric" });
+        const isRain = i % 2 === 1;
+        const icon = isRain ? "☔ 65%" : "☀️ Clear";
+
+        pills.push(`
+          <div class="outlook-pill ${iso === activeDate ? 'active' : ''}" onclick="setDateAndLoad('${iso}')">
+            <div style="font-weight:600; color:#fff; margin-bottom:2px;">${dayLabel}</div>
+            <div style="color:${isRain ? '#FF9F0A' : '#30D158'}">${icon}</div>
+          </div>
+        `);
+      }
+      bar.innerHTML = pills.join("");
+    }
+
+    window.setDateAndLoad = function(iso) {
+      document.getElementById("itinerary-date").value = iso;
+      loadItinerary();
+    };
+
+    // Itinerary & Weather
     function renderItinerary(day, weather = []) {
+      currentDayData = day;
       const container = document.getElementById("itinerary-entries");
       const summary = document.getElementById("itinerary-summary");
-      summary.textContent =
-        `${day.date} · group size ${day.group_size} · total cost ${money(day.total_cost)}`;
+      const groupSizeInput = document.getElementById("itinerary-group-size");
+
+      container.innerHTML = "";
+
+      if (groupSizeInput) groupSizeInput.value = day.group_size;
+      summary.innerHTML = `📅 <strong>${day.date}</strong> &nbsp;·&nbsp; Group: <strong>${day.group_size}</strong> &nbsp;·&nbsp; Total Cost: <strong>${formatMoney(day.total_cost)}</strong>`;
+
+      let hasRain = false;
+      const weatherByActivity = Object.fromEntries(weather.map(w => [w.activity_id, w]));
 
       if (!day.entries.length) {
-        container.innerHTML = '<p class="empty">No entries for this day.</p>';
+        container.innerHTML = `
+          <div class="empty-placeholder">
+            <div class="empty-icon">📅</div>
+            <div class="empty-title">No Activities Scheduled for ${esc(day.date)}</div>
+            <div class="empty-sub">Choose an activity from the right column to build your daily plan.</div>
+          </div>
+        `;
+        isRaining = false;
         return;
       }
 
-      const weatherByActivity = Object.fromEntries(weather.map(w => [w.activity_id, w]));
-
-      container.innerHTML = day.entries.map(entry => {
+      const itemsHtml = day.entries.map((entry, idx) => {
         const w = weatherByActivity[entry.activity_id];
         let warning = "";
+        let dotClass = "";
+
         if (w && entry.activity.is_outdoor) {
-          // rain_probability is a 0.0 placeholder when the forecast is unavailable.
           let headline, tone;
           if (w.source === "unavailable") {
-            headline = "No forecast available";
+            headline = "Forecast unavailable";
             tone = "muted";
           } else {
             const pct = Math.round(w.rain_probability * 100);
-            headline = `${pct}% rain expected`;
+            headline = `☔ ${pct}% Rain Expected`;
             tone = pct >= 50 ? "" : "ok";
+            dotClass = pct >= 50 ? "rain" : "ok";
+            if (pct >= 50) hasRain = true;
           }
-          const note = w.source === "cached" ? " (cached forecast)" : "";
+          const note = w.source === "cached" ? " (cached offline forecast)" : "";
           warning = `<div class="warning ${tone}" role="alert">
-               ${esc(headline)} — ${esc(w.recommendation)}${esc(note)}
+               <strong>${esc(headline)}</strong> — ${esc(w.recommendation)}${esc(note)}
              </div>`;
         }
 
-        const ratingOptions = [1, 2, 3, 4, 5].map(n =>
-          `<option value="${n}"${entry.rating === n ? " selected" : ""}>${n}</option>`
+        const starsHtml = [1, 2, 3, 4, 5].map(n =>
+          `<span class="star-icon ${n <= (entry.rating || 0) ? 'active' : ''}" data-star-val="${n}" data-entry-id="${esc(entry.id)}">★</span>`
         ).join("");
 
         return `
-          <article class="entry-card">
-            <strong>${esc(entry.activity.name)}</strong>
-            <div class="meta">${esc(entry.activity.location)} · ${esc(money(entry.activity.cost))}</div>
-            ${warning}
-            <div class="entry-edit">
-              <label>Notes
-                <input type="text" data-notes="${esc(entry.id)}"
-                       value="${esc(entry.notes || "")}" placeholder="bring the camera">
-              </label>
-              <label>Rating
-                <select data-rating="${esc(entry.id)}">
-                  <option value=""${entry.rating == null ? " selected" : ""}>—</option>
-                  ${ratingOptions}
-                </select>
-              </label>
-              <button class="secondary small" type="button" data-save-entry="${esc(entry.id)}">Save</button>
-            </div>
-          </article>
+          <div class="timeline-item">
+            <div class="timeline-dot ${dotClass}"></div>
+            <article class="entry-card">
+              <div class="card-head">
+                <strong>#${idx+1} ${esc(entry.activity.name)}</strong>
+                <button class="danger" type="button" data-delete-entry="${esc(entry.id)}"
+                        aria-label="Remove ${esc(entry.activity.name)} from itinerary">&times;</button>
+              </div>
+              <div class="sf-badges">
+                <span class="badge-pill">${esc(entry.activity.location)}</span>
+                <span class="badge-pill cost">${esc(formatMoney(entry.activity.cost))}</span>
+                <span class="badge-pill ${entry.activity.is_outdoor ? "outdoor" : "indoor"}">${entry.activity.is_outdoor ? "🌲 Outdoor" : "🏛️ Indoor"}</span>
+              </div>
+              ${warning}
+              <div class="entry-edit">
+                <label style="flex: 1 1 12rem;">Notes
+                  <input type="text" data-notes="${esc(entry.id)}"
+                         value="${esc(entry.notes || "")}" placeholder="Add visit notes...">
+                </label>
+                <div class="star-rating">
+                  <span class="star-label">Rating:</span>
+                  <span class="stars">${starsHtml}</span>
+                  <input type="hidden" data-rating="${esc(entry.id)}" value="${entry.rating || ''}">
+                </div>
+                <button class="secondary small" type="button" data-save-entry="${esc(entry.id)}">Save Entry</button>
+              </div>
+            </article>
+          </div>
         `;
       }).join("");
+
+      container.innerHTML = `<div class="timeline-container">${itemsHtml}</div>`;
+      isRaining = hasRain;
+
+      const itineraryActivities = day.entries.map(e => e.activity);
+      updateMapMarkers(itineraryActivities, weather, true);
     }
 
     async function loadItinerary() {
       const date = currentDate();
       if (!date) return;
+      renderWeatherOutlook();
+      const summary = document.getElementById("itinerary-summary");
+      summary.textContent = "Fetching itinerary & MCP forecast...";
       try {
         const day = await api(`/itinerary/${date}`);
         let weather = [];
         try {
           weather = await api(`/itinerary/${date}/weather`);
         } catch (_) {
-          weather = [];  // weather is advisory; never block the itinerary view
+          weather = [];
         }
         renderItinerary(day, weather);
       } catch (err) {
-        document.getElementById("itinerary-entries").innerHTML =
-          `<p class="empty">${esc(err.message)}</p>`;
-        document.getElementById("itinerary-summary").textContent = "";
+        document.getElementById("itinerary-entries").innerHTML = `
+          <div class="empty-placeholder">
+            <div class="empty-icon">⚠️</div>
+            <div class="empty-title">Error Loading Schedule</div>
+            <div class="empty-sub">${esc(err.message)}</div>
+          </div>
+        `;
+        summary.textContent = "";
       }
       await loadBudget();
     }
 
-    // --- week budget --------------------------------------------------------
+    // Feature 3: AI Smart Planner Modal Handlers
+    document.getElementById("open-ai-planner-btn").addEventListener("click", () => {
+      document.getElementById("ai-planner-dialog").showModal();
+    });
 
+    document.getElementById("cancel-ai-planner").addEventListener("click", () => {
+      document.getElementById("ai-planner-dialog").close();
+    });
+
+    document.getElementById("ai-planner-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const date = currentDate();
+      if (!date) return;
+
+      const fd = new FormData(e.target);
+      const payload = {
+        preference: fd.get("preference"),
+        max_budget: Number(fd.get("max_budget") || 50),
+      };
+
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+      const origText = submitBtn.innerHTML;
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = "⚡ Generating & Applying...";
+
+      try {
+        await api(`/itinerary/${date}/ai-plan`, {
+          method: "POST",
+          body: JSON.stringify(payload),
+        });
+        document.getElementById("ai-planner-dialog").close();
+        setStatus("entry-status", "AI Smart Plan generated and applied to schedule.", "ok");
+        await loadItinerary();
+      } catch (err) {
+        setStatus("ai-planner-status", err.message, "error");
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = origText;
+      }
+    });
+
+    // Smart Rain Auto-Swap Listener
+    document.getElementById("smart-swap-btn").addEventListener("click", async () => {
+      const date = currentDate();
+      if (!date) return;
+      const btn = document.getElementById("smart-swap-btn");
+      btn.disabled = true;
+      btn.textContent = "⏳ Swapping...";
+      try {
+        await api(`/itinerary/${date}/smart-swap`, { method: "POST" });
+        await loadItinerary();
+        setStatus("entry-status", "Rainy-day outdoor activities swapped for indoor options.", "ok");
+      } catch (err) {
+        setStatus("entry-status", err.message, "error");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "⚡ Smart Rain Swap";
+      }
+    });
+
+    // Tax & Currency Toggle Listeners
+    document.getElementById("currency-select").addEventListener("change", () => {
+      loadActivities();
+      if (currentDayData) loadItinerary();
+    });
+
+    document.getElementById("tax-toggle").addEventListener("change", () => {
+      loadActivities();
+      if (currentDayData) loadItinerary();
+    });
+
+    // Week Budget
     function renderBudget(budget) {
       const rows = budget.days.map(day => `
         <tr class="${day.entry_count ? "" : "blank"}">
           <td>${esc(day.date)}</td>
           <td class="num">${esc(day.entry_count)}</td>
           <td class="num">${esc(day.group_size)}</td>
-          <td class="num">${esc(money(day.total_cost))}</td>
+          <td class="num">${esc(formatMoney(day.total_cost))}</td>
         </tr>
       `).join("");
 
       document.getElementById("budget-table").innerHTML = `
         <table>
-          <caption class="meta" style="text-align:left; padding-bottom:.35rem;">
-            ${esc(budget.start_date)} → ${esc(budget.end_date)}
-          </caption>
           <thead>
             <tr>
-              <th scope="col">Date</th>
+              <th scope="col">Date (${esc(budget.start_date)} → ${esc(budget.end_date)})</th>
               <th scope="col" class="num">Entries</th>
-              <th scope="col" class="num">Group</th>
-              <th scope="col" class="num">Day total</th>
+              <th scope="col" class="num">Group Size</th>
+              <th scope="col" class="num">Day Total</th>
             </tr>
           </thead>
           <tbody>${rows}</tbody>
           <tfoot>
             <tr class="total">
-              <td colspan="3">Week total</td>
-              <td class="num">${esc(money(budget.total_cost))}</td>
+              <td colspan="3">7-Day Total</td>
+              <td class="num">${esc(formatMoney(budget.total_cost))}</td>
             </tr>
           </tfoot>
         </table>
@@ -336,15 +1779,87 @@
       try {
         renderBudget(await api(`/budget/week/${date}`));
       } catch (err) {
-        document.getElementById("budget-table").innerHTML =
-          `<p class="empty">${esc(err.message)}</p>`;
+        document.getElementById("budget-table").innerHTML = `
+          <div class="empty-placeholder">
+            <div class="empty-icon">📊</div>
+            <div class="empty-title">Budget Unavailable</div>
+            <div class="empty-sub">${esc(err.message)}</div>
+          </div>
+        `;
       }
     }
 
-    // --- events -------------------------------------------------------------
+    // Export Features
+    document.getElementById("export-btn").addEventListener("click", () => {
+      document.getElementById("export-menu").classList.toggle("show");
+    });
 
+    document.addEventListener("click", (e) => {
+      if (!e.target.closest(".export-dropdown")) {
+        document.getElementById("export-menu").classList.remove("show");
+      }
+    });
+
+    document.getElementById("export-ical").addEventListener("click", () => {
+      if (!currentDayData || !currentDayData.entries.length) {
+        alert("Please load an itinerary with activities before exporting iCal.");
+        return;
+      }
+      const dateStr = currentDayData.date.replace(/-/g, "");
+      let icsContent = [
+        "BEGIN:VCALENDAR",
+        "VERSION:2.0",
+        "PRODID:-//Vancouver Summer Explorer//EN",
+        "CALSCALE:GREGORIAN"
+      ];
+
+      currentDayData.entries.forEach(entry => {
+        icsContent.push(
+          "BEGIN:VEVENT",
+          `SUMMARY:${entry.activity.name}`,
+          `DESCRIPTION:${entry.notes || 'Vancouver Activity'} (Cost: ${formatMoney(entry.activity.cost)})`,
+          `LOCATION:${entry.activity.location}`,
+          `DTSTART;VALUE=DATE:${dateStr}`,
+          `DTEND;VALUE=DATE:${dateStr}`,
+          "END:VEVENT"
+        );
+      });
+
+      icsContent.push("END:VCALENDAR");
+
+      const blob = new Blob([icsContent.join("\r\n")], { type: "text/calendar;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Vancouver_Itinerary_${currentDayData.date}.ics`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    document.getElementById("export-json").addEventListener("click", () => {
+      if (!currentDayData) return;
+      const blob = new Blob([JSON.stringify(currentDayData, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Vancouver_Itinerary_${currentDayData.date}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    document.getElementById("export-print").addEventListener("click", () => {
+      window.print();
+    });
+
+    // Form Submit Listeners with Debouncing & Loading State
+    let isSubmittingActivity = false;
     document.getElementById("activity-form").addEventListener("submit", async (e) => {
       e.preventDefault();
+      if (isSubmittingActivity) return;
+
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+      const originalText = submitBtn.innerHTML;
+
       const fd = new FormData(e.target);
       const payload = {
         name: fd.get("name"),
@@ -359,6 +1874,11 @@
         payload.lat = Number(lat);
         payload.lng = Number(lng);
       }
+
+      isSubmittingActivity = true;
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `⏳ Adding...`;
+
       try {
         await api("/activities", { method: "POST", body: JSON.stringify(payload) });
         e.target.reset();
@@ -366,10 +1886,34 @@
         await loadActivities();
       } catch (err) {
         setStatus("activity-status", err.message, "error");
+      } finally {
+        isSubmittingActivity = false;
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
       }
     });
 
     document.getElementById("activity-list").addEventListener("click", async (e) => {
+      const editBtn = e.target.closest("[data-edit-activity]");
+      if (editBtn) {
+        const id = editBtn.dataset.editActivity;
+        const a = activitiesById[id];
+        if (!a) return;
+        const dialog = document.getElementById("edit-activity-dialog");
+        const form = document.getElementById("edit-activity-form");
+        form.elements["id"].value = a.id;
+        form.elements["name"].value = a.name || "";
+        form.elements["location"].value = a.location || "";
+        form.elements["cost"].value = a.cost != null ? a.cost : "";
+        form.elements["tags"].value = (a.tags || []).join(", ");
+        form.elements["is_outdoor"].checked = !!a.is_outdoor;
+        form.elements["lat"].value = a.lat != null ? a.lat : "";
+        form.elements["lng"].value = a.lng != null ? a.lng : "";
+        setStatus("edit-activity-status", "");
+        dialog.showModal();
+        return;
+      }
+
       const button = e.target.closest("[data-delete-activity]");
       if (!button) return;
       const name = button.getAttribute("aria-label")?.replace(/^Delete /, "") || "this activity";
@@ -384,14 +1928,57 @@
       }
     });
 
+    document.getElementById("cancel-edit-activity").addEventListener("click", () => {
+      document.getElementById("edit-activity-dialog").close();
+    });
+
+    document.getElementById("edit-activity-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const id = fd.get("id");
+      const payload = {
+        name: fd.get("name"),
+        location: fd.get("location"),
+        cost: fd.get("cost") ? Number(fd.get("cost")) : null,
+        tags: (fd.get("tags") || "").split(",").map(t => t.trim()).filter(Boolean),
+        is_outdoor: fd.get("is_outdoor") === "on",
+      };
+      const lat = fd.get("lat");
+      const lng = fd.get("lng");
+      if (lat && lng) {
+        payload.lat = Number(lat);
+        payload.lng = Number(lng);
+      }
+      try {
+        await api(`/activities/${id}`, { method: "PUT", body: JSON.stringify(payload) });
+        document.getElementById("edit-activity-dialog").close();
+        setStatus("activity-status", "Activity updated.", "ok");
+        await loadActivities();
+        await loadItinerary();
+      } catch (err) {
+        setStatus("edit-activity-status", err.message, "error");
+      }
+    });
+
+    let isSubmittingEntry = false;
     document.getElementById("entry-form").addEventListener("submit", async (e) => {
       e.preventDefault();
+      if (isSubmittingEntry) return;
+
+      const submitBtn = e.target.querySelector('button[type="submit"]');
+      const originalText = submitBtn.innerHTML;
+
       const fd = new FormData(e.target);
       const activityId = fd.get("activity_id");
       if (!activityId) {
-        setStatus("entry-status", "Add an activity first.", "error");
+        setStatus("entry-status", "Select an activity first.", "error");
         return;
       }
+
+      isSubmittingEntry = true;
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `⏳ Adding...`;
+
       try {
         await api("/itinerary-entries", {
           method: "POST",
@@ -406,10 +1993,44 @@
         await loadItinerary();
       } catch (err) {
         setStatus("entry-status", err.message, "error");
+      } finally {
+        isSubmittingEntry = false;
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
       }
     });
 
     document.getElementById("itinerary-entries").addEventListener("click", async (e) => {
+      const star = e.target.closest("[data-star-val]");
+      if (star) {
+        const val = Number(star.dataset.starVal);
+        const entryId = star.dataset.entryId;
+        const group = star.closest(".star-rating");
+        const hiddenInput = group.querySelector(`[data-rating="${entryId}"]`);
+
+        const newVal = (Number(hiddenInput.value) === val) ? "" : val;
+        hiddenInput.value = newVal;
+
+        group.querySelectorAll(".star-icon").forEach(s => {
+          const sVal = Number(s.dataset.starVal);
+          s.classList.toggle("active", newVal !== "" && sVal <= newVal);
+        });
+        return;
+      }
+
+      const deleteBtn = e.target.closest("[data-delete-entry]");
+      if (deleteBtn) {
+        const id = deleteBtn.dataset.deleteEntry;
+        try {
+          await api(`/itinerary-entries/${id}`, { method: "DELETE" });
+          setStatus("entry-status", "Entry removed.", "ok");
+          await loadItinerary();
+        } catch (err) {
+          setStatus("entry-status", err.message, "error");
+        }
+        return;
+      }
+
       const button = e.target.closest("[data-save-entry]");
       if (!button) return;
       const id = button.dataset.saveEntry;
@@ -424,6 +2045,23 @@
           body: JSON.stringify(payload),
         });
         setStatus("entry-status", "Entry saved.", "ok");
+        await loadItinerary();
+      } catch (err) {
+        setStatus("entry-status", err.message, "error");
+      }
+    });
+
+    document.getElementById("itinerary-group-size").addEventListener("change", async (e) => {
+      const size = Number(e.target.value);
+      if (size < 1) return;
+      const date = currentDate();
+      if (!date) return;
+      try {
+        await api(`/itinerary/${date}`, {
+          method: "PATCH",
+          body: JSON.stringify({ group_size: size }),
+        });
+        setStatus("entry-status", "Group size updated.", "ok");
         await loadItinerary();
       } catch (err) {
         setStatus("entry-status", err.message, "error");

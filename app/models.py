@@ -69,6 +69,10 @@ class ItineraryEntryResponse(BaseModel):
     rating: int | None
 
 
+class ItineraryDayPatch(BaseModel):
+    group_size: int = Field(ge=1)
+
+
 class ItineraryDayResponse(BaseModel):
     date: str
     group_size: int
@@ -98,3 +102,9 @@ class WeatherSuggestion(BaseModel):
     # "live" | "cached" | "unavailable" — how much to trust rain_probability.
     condition: str = "unknown"
     source: str = "live"
+
+
+class AIPlanRequest(BaseModel):
+    preference: str = "outdoor"
+    max_budget: float = 100.0
+

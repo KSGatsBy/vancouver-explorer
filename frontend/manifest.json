@@ -1,0 +1,16 @@
+{
+  "name": "Vancouver Summer Explorer",
+  "short_name": "YVR Explorer",
+  "description": "Rain-safe Vancouver activity and itinerary planner powered by FastMCP weather tools.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#090d16",
+  "theme_color": "#3b82f6",
+  "icons": [
+    {
+      "src": "https://leafletjs.com/docs/images/logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}
