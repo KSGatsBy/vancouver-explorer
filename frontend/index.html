@@ -449,6 +449,171 @@
       border: 1px solid rgba(255, 255, 255, 0.08);
     }
 
+    /* HTML & Body Smooth Scroll */
+    html {
+      scroll-behavior: smooth;
+    }
+
+    /* Immersive Hero Banner Section (100vh) */
+    .hero-section {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      overflow: hidden;
+      background: #090d16 url('https://images.unsplash.com/photo-1559511260-66a654ae982a?auto=format&fit=crop&w=1920&q=80') center/cover no-repeat;
+    }
+
+    .hero-overlay {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 40%, rgba(15, 23, 42, 0.35) 0%, rgba(9, 13, 22, 0.75) 80%, rgba(9, 13, 22, 0.95) 100%),
+                  linear-gradient(180deg, rgba(9, 13, 22, 0.2) 0%, rgba(9, 13, 22, 0.85) 100%);
+      z-index: 1;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      max-width: 900px;
+      padding: 0 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      animation: heroFadeUp 1s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes heroFadeUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .hero-badge {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--apple-teal);
+      background: rgba(100, 210, 255, 0.12);
+      border: 1px solid rgba(100, 210, 255, 0.3);
+      padding: 6px 18px;
+      border-radius: 9999px;
+      margin-bottom: 20px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 0 20px rgba(100, 210, 255, 0.2);
+    }
+
+    .hero-title {
+      font-size: clamp(3.5rem, 8vw, 6.5rem);
+      font-weight: 800;
+      letter-spacing: 14px;
+      text-transform: uppercase;
+      margin: 0;
+      color: #ffffff;
+      background: linear-gradient(180deg, #ffffff 40%, rgba(255, 255, 255, 0.7) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
+      line-height: 1.05;
+    }
+
+    .hero-subtitle {
+      font-size: clamp(1rem, 2vw, 1.35rem);
+      font-weight: 400;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.85);
+      margin: 18px 0 36px 0;
+      text-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .hero-btn {
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 600;
+      padding: 14px 28px;
+      border-radius: 14px;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .hero-btn.primary-btn {
+      color: #ffffff;
+      background: var(--accent-blue-gradient);
+      box-shadow: 0 10px 30px -5px rgba(59, 130, 246, 0.5);
+    }
+
+    .hero-btn.primary-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 16px 36px -5px rgba(59, 130, 246, 0.7);
+    }
+
+    .hero-btn.secondary-btn {
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--glass-border-hover);
+      backdrop-filter: blur(16px);
+      margin-top: 0;
+      box-shadow: none;
+    }
+
+    .hero-btn.secondary-btn:hover {
+      background: rgba(255, 255, 255, 0.16);
+      transform: translateY(-2px);
+    }
+
+    /* Scroll Down Indicator Component */
+    .scroll-indicator {
+      position: absolute;
+      bottom: 32px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+      color: rgba(255, 255, 255, 0.7);
+      transition: color 0.2s ease;
+    }
+
+    .scroll-indicator:hover {
+      color: #ffffff;
+    }
+
+    .scroll-text {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .scroll-arrow {
+      animation: bounceScroll 2s infinite cubic-bezier(0.45, 0, 0.55, 1);
+    }
+
+    @keyframes bounceScroll {
+      0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+      40% { transform: translateY(8px); }
+      60% { transform: translateY(4px); }
+    }
+
     .badge-pill.cost {
       background: rgba(100, 210, 255, 0.12);
       color: var(--apple-teal);
@@ -458,7 +623,36 @@
 <body>
   <!-- Dynamic Weather Canvas Background -->
   <canvas id="weather-canvas"></canvas>
-  <div class="app-viewport">
+
+  <!-- Immersive Fullscreen Hero Section (100vh) -->
+  <section class="hero-section">
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <div class="hero-badge">SUMMER EXPLORER 2026</div>
+      <h1 class="hero-title">VANCOUVER</h1>
+      <p class="hero-subtitle">Rain-Aware Smart Itinerary • Microclimate Planning Engine</p>
+      <div class="hero-actions">
+        <a href="#main-content-section" class="hero-btn primary-btn">
+          🗺️ Explore Destination & Map
+        </a>
+        <button class="hero-btn secondary-btn" id="hero-ai-planner-btn" type="button">
+          ✨ AI Smart Planner
+        </button>
+      </div>
+    </div>
+
+    <!-- Animated Scroll Down Indicator -->
+    <a href="#main-content-section" class="scroll-indicator" aria-label="Scroll to Main Content">
+      <span class="scroll-text">SCROLL TO EXPLORE</span>
+      <div class="scroll-arrow">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M7 13l5 5 5-5M12 6v12"/>
+        </svg>
+      </div>
+    </a>
+  </section>
+
+  <div id="main-content-section" class="app-viewport">
     <!-- Top Header Bar -->
     <div class="titlebar">
       <div class="window-title">
@@ -1244,7 +1438,11 @@
     }
 
     // AI Smart Planner Modal Handlers
-    document.getElementById("open-ai-planner-btn").addEventListener("click", () => {
+    document.getElementById("open-ai-planner-btn")?.addEventListener("click", () => {
+      document.getElementById("ai-planner-dialog").showModal();
+    });
+
+    document.getElementById("hero-ai-planner-btn")?.addEventListener("click", () => {
       document.getElementById("ai-planner-dialog").showModal();
     });
 
