@@ -862,6 +862,49 @@
       color: #ffffff !important;
       transform: none !important;
     }
+
+    /* 1. 开启平滑吸附滚动 */
+    html {
+      scroll-behavior: smooth;
+      scroll-snap-type: y mandatory;
+    }
+
+    /* 2. 统一所有核心 Section 的容器规范 */
+    .hero-section,
+    .activity-library-section,
+    .schedule-analytics-section {
+      scroll-snap-align: start;
+      scroll-snap-stop: always;
+      min-height: 100vh;
+      width: 100%;
+      position: relative;
+      box-sizing: border-box;
+      padding: 60px 40px;
+      
+      /* 强制独立不透明背景，防止看到上一页内容 */
+      background-color: #0b0f19 !important; 
+      z-index: 10;
+      overflow: hidden; /* 彻底解决地图和卡片溢出 (Overflow Isolation) */
+    }
+
+    /* Hero 首屏专属设置 */
+    .hero-section {
+      padding: 0;
+      z-index: 5;
+      min-height: 100vh;
+    }
+
+    /* 3. 在版块之间增加清晰的渐变分割线 (Visual Divider) */
+    .activity-library-section::before,
+    .schedule-analytics-section::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 5%;
+      width: 90%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+    }
   </style>
 </head>
 <body>
@@ -931,7 +974,7 @@
       </div>
 
       <!-- SECTION 2: STANDALONE ACTIVITY LIBRARY & MAP (下滑第一站) -->
-      <section id="section-activities" style="margin-bottom: 40px;">
+      <section id="section-activities" class="activity-library-section">
         <div class="grid-2col">
           <!-- Left Column (65% width): Leaflet Map & Saved Activity Cards -->
           <div class="sf-card">
@@ -985,7 +1028,7 @@
       </section>
 
       <!-- SECTION 3: SCHEDULE & ANALYTICS DUAL SECTION (下滑第二站) -->
-      <section id="section-analytics">
+      <section id="section-analytics" class="schedule-analytics-section">
         <!-- Segmented Tab Navigation for Section 3 Only -->
         <nav class="segmented-control">
           <button class="segment-btn active" data-tab="tab-itinerary">
