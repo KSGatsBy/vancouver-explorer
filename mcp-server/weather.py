@@ -121,7 +121,7 @@ def _fetch_live_forecast(date: str, lat: float, lng: float) -> dict[str, Any]:
     params = {
         "latitude": lat,
         "longitude": lng,
-        "daily": "weather_code,precipitation_probability_max",
+        "daily": "weather_code,precipitation_probability_max,uv_index_max",
         "start_date": date,
         "end_date": date,
         "timezone": "America/Vancouver",
@@ -136,6 +136,9 @@ def _fetch_live_forecast(date: str, lat: float, lng: float) -> dict[str, Any]:
     index = times.index(date)
     rain_pct = daily.get("precipitation_probability_max", [0])[index]
     weather_code = daily.get("weather_code", [None])[index]
+    uv_list = daily.get("uv_index_max", [5.0])
+    uv_val = float(uv_list[index] if len(uv_list) > index and uv_list[index] is not None else 5.0)
+
     rain_probability = round(float(rain_pct or 0) / 100.0, 2)
     condition = _condition_from_weather_code(weather_code, rain_probability)
 
@@ -144,17 +147,12 @@ def _fetch_live_forecast(date: str, lat: float, lng: float) -> dict[str, Any]:
         "location": f"{lat},{lng}",
         "condition": condition,
         "rain_probability": rain_probability,
+        "uv_index": uv_val,
         "source": "live",
     }
 
 
 def get_forecast(date: str, location: str) -> dict[str, Any]:
-    """Forecast for a date/location: live Open-Meteo, else cached, else 'unavailable'.
-
-    Never raises for a missing forecast — callers get a record whose ``source``
-    says how much to trust it. ``rain_probability`` is 0.0 when
-    ``source == "unavailable"``; check ``source`` before presenting it.
-    """
     lat, lng = parse_location(location)
     memo_key = (date, round(lat, 3), round(lng, 3))
 
@@ -167,12 +165,12 @@ def get_forecast(date: str, location: str) -> dict[str, Any]:
     except Exception:
         cached = _find_cached_forecast(date, lat, lng)
         if cached is None:
-            # Nothing live, nothing seeded — degrade instead of failing the day.
             return {
                 "date": date,
                 "location": f"{lat},{lng}",
                 "condition": "unknown",
                 "rain_probability": 0.0,
+                "uv_index": 5.0,
                 "source": "unavailable",
             }
         forecast = {
@@ -180,6 +178,7 @@ def get_forecast(date: str, location: str) -> dict[str, Any]:
             "location": f"{lat},{lng}",
             "condition": cached["condition"],
             "rain_probability": cached["rain_probability"],
+            "uv_index": cached.get("uv_index", 5.0),
             "source": "cached",
         }
 
@@ -188,15 +187,25 @@ def get_forecast(date: str, location: str) -> dict[str, Any]:
 
 
 def build_recommendation(
-    is_outdoor: bool, rain_probability: float, source: str = "live"
+    is_outdoor: bool, rain_probability: float, source: str = "live", uv_index: float = 5.0
 ) -> str:
     if source == "unavailable":
         return "forecast unavailable — plan flexibly"
     if is_outdoor and rain_probability >= RAIN_THRESHOLD:
         return "indoor alternative suggested"
+    if is_outdoor and uv_index >= 6.0:
+        return f"high UV index ({uv_index}) — sun protection recommended"
     if is_outdoor:
         return "outdoor conditions look favorable"
     return "indoor activity — weather unlikely to affect plans"
+
+
+def get_transit_advice(is_outdoor: bool, rain_probability: float, uv_index: float = 5.0) -> str:
+    if is_outdoor and rain_probability >= RAIN_THRESHOLD:
+        return "🚆 TransLink Transit Advice: High chance of rain. Take SkyTrain (Expo/Canada Line) & use covered concourses."
+    if is_outdoor and uv_index >= 6.0:
+        return "🕶️ TransLink Transit Advice: High UV index. Prefer air-conditioned SeaBus / SkyTrain transit."
+    return ""
 
 
 def suggest_indoor_or_outdoor(date: str) -> list[dict[str, Any]]:
@@ -210,6 +219,7 @@ def suggest_indoor_or_outdoor(date: str) -> list[dict[str, Any]]:
         location = f"{activity['lat']},{activity['lng']}"
         forecast = get_forecast(date, location)
         rain_probability = forecast["rain_probability"]
+        uv_index = forecast.get("uv_index", 5.0)
         source = forecast["source"]
         suggestions.append(
             {
@@ -217,9 +227,13 @@ def suggest_indoor_or_outdoor(date: str) -> list[dict[str, Any]]:
                 "name": activity["name"],
                 "condition": forecast["condition"],
                 "rain_probability": rain_probability,
+                "uv_index": uv_index,
                 "source": source,
                 "recommendation": build_recommendation(
-                    activity["is_outdoor"], rain_probability, source
+                    activity["is_outdoor"], rain_probability, source, uv_index
+                ),
+                "transit_advice": get_transit_advice(
+                    activity["is_outdoor"], rain_probability, uv_index
                 ),
             }
         )

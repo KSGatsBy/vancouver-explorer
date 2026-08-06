@@ -87,6 +87,23 @@ async def get_itinerary_weather(date: str):
     return [WeatherSuggestion(**item) for item in suggestions]
 
 
+import math
+
+def haversine_km(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
+    """Calculates great-circle distance between two coordinates in kilometers."""
+    R = 6371.0
+    dlat = math.radians(lat2 - lat1)
+    dlng = math.radians(lng2 - lng1)
+    a = (
+        math.sin(dlat / 2) ** 2
+        + math.cos(math.radians(lat1))
+        * math.cos(math.radians(lat2))
+        * math.sin(dlng / 2) ** 2
+    )
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    return R * c
+
+
 @router.post("/itinerary/{date}/smart-swap", response_model=ItineraryDayResponse)
 async def smart_swap_itinerary(date: str):
     with get_connection() as conn:
@@ -105,7 +122,7 @@ async def smart_swap_itinerary(date: str):
         # 2. Get outdoor entries for this date
         entries = conn.execute(
             """
-            SELECT e.id, e.activity_id, a.is_outdoor
+            SELECT e.id, e.activity_id, a.is_outdoor, a.lat, a.lng, a.cost
             FROM itinerary_entries e
             JOIN activities a ON a.id = e.activity_id
             WHERE e.day_id = ?
@@ -124,19 +141,51 @@ async def smart_swap_itinerary(date: str):
         swapped_count = 0
         for entry in entries:
             if entry["is_outdoor"] and entry["activity_id"] in rain_activity_ids:
-                # Find an indoor activity not currently scheduled on this day
-                available_indoor = next(
-                    (ia for ia in indoor_activities if ia["id"] not in scheduled_activity_ids),
-                    None
-                )
-                if available_indoor:
+                target_lat = entry["lat"] if entry["lat"] is not None else 49.2827
+                target_lng = entry["lng"] if entry["lng"] is not None else -123.1207
+                target_cost = entry["cost"] or 0.0
+
+                candidates = []
+                for ia in indoor_activities:
+                    if ia["id"] in scheduled_activity_ids:
+                        continue
+                    ia_lat = ia["lat"] if ia["lat"] is not None else 49.2827
+                    ia_lng = ia["lng"] if ia["lng"] is not None else -123.1207
+                    ia_cost = ia["cost"] or 0.0
+
+                    dist = haversine_km(target_lat, target_lng, ia_lat, ia_lng)
+                    cost_diff = abs(ia_cost - target_cost)
+                    cost_tolerance = max(target_cost * 0.20, 10.0)
+
+                    # Tier 1: <= 2.0 km & within ±20% budget
+                    # Tier 2: <= 5.0 km
+                    # Tier 3: any available indoor activity
+                    if dist <= 2.0 and cost_diff <= cost_tolerance:
+                        rank = 1
+                    elif dist <= 5.0:
+                        rank = 2
+                    else:
+                        rank = 3
+
+                    candidates.append((rank, dist, cost_diff, ia))
+
+                candidates.sort(key=lambda x: (x[0], x[1], x[2]))
+
+                if candidates:
+                    best_match = candidates[0]
+                    available_indoor = best_match[3]
+                    dist_val = best_match[1]
                     conn.execute(
                         """
                         UPDATE itinerary_entries 
-                        SET activity_id = ?, notes = '☔ Swapped for rain protection'
+                        SET activity_id = ?, notes = ?
                         WHERE id = ?
                         """,
-                        (available_indoor["id"], entry["id"]),
+                        (
+                            available_indoor["id"],
+                            f"☔ Swapped ({dist_val:.1f}km away, {available_indoor['name']})",
+                            entry["id"],
+                        ),
                     )
                     scheduled_activity_ids.remove(entry["activity_id"])
                     scheduled_activity_ids.add(available_indoor["id"])

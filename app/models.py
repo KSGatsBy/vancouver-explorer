@@ -99,6 +99,8 @@ class WeatherSuggestion(BaseModel):
     name: str
     rain_probability: float
     recommendation: str
+    uv_index: float = 5.0
+    transit_advice: str = ""
     # "live" | "cached" | "unavailable" — how much to trust rain_probability.
     condition: str = "unknown"
     source: str = "live"

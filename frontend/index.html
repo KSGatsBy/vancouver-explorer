@@ -1472,6 +1472,8 @@
     }
 
     // Leaflet CartoDB Dark Map & Polylines
+    let clickMarker = null;
+
     function initMap() {
       if (map) return;
       map = L.map('vancouver-map').setView([49.2827, -123.1207], 11);
@@ -1479,6 +1481,37 @@
         attribution: '&copy; CARTO & OpenStreetMap',
         maxZoom: 18
       }).addTo(map);
+
+      // 地图点击拾取坐标 (Click-to-Coordinate)
+      map.on('click', (e) => {
+        const lat = Number(e.latlng.lat.toFixed(4));
+        const lng = Number(e.latlng.lng.toFixed(4));
+
+        const form = document.getElementById("activity-form");
+        if (form) {
+          if (form.elements["lat"]) form.elements["lat"].value = lat;
+          if (form.elements["lng"]) form.elements["lng"].value = lng;
+          setStatus("activity-status", `📍 Clicked coordinates filled: ${lat}, ${lng}`, "ok");
+        }
+
+        if (clickMarker) map.removeLayer(clickMarker);
+        clickMarker = L.circleMarker([lat, lng], {
+          radius: 10,
+          fillColor: "#64D2FF",
+          color: "#ffffff",
+          weight: 3,
+          opacity: 1,
+          fillOpacity: 0.95
+        }).addTo(map);
+
+        clickMarker.bindPopup(`
+          <div style="font-family:'Plus Jakarta Sans', sans-serif; padding:4px; text-align:center;">
+            <strong style="font-size:12px; color:#64D2FF;">📍 Selected Location</strong>
+            <div style="font-size:11px; color:#ffffff; margin-top:2px;">Lat: ${lat}, Lng: ${lng}</div>
+            <div style="font-size:10px; color:#a5b4fc; margin-top:2px;">Auto-filled into form</div>
+          </div>
+        `).openPopup();
+      });
     }
 
     function updateMapMarkers(activities, weatherList = [], isItineraryRoute = false) {
@@ -1719,8 +1752,12 @@
             if (pct >= 50) hasRain = true;
           }
           const note = w.source === "cached" ? " (cached offline forecast)" : "";
-          warning = `<div class="warning ${tone}" role="alert">
-               <strong>${esc(headline)}</strong> — ${esc(w.recommendation)}${esc(note)}
+          const transitTipText = w.transit_advice || (w.rain_probability >= 0.5 ? "🚆 TransLink Transit Advice: High chance of rain. Take SkyTrain & use covered concourses to avoid outdoor walking." : "");
+          const transitTip = transitTipText ? `<div style="font-size:11.5px; color:#64D2FF; margin-top:8px; padding-top:6px; border-top:1px dashed rgba(255,255,255,0.1); width:100%; font-weight:500;">${esc(transitTipText)}</div>` : "";
+
+          warning = `<div class="warning ${tone}" role="alert" style="display:flex; flex-direction:column; align-items:flex-start;">
+               <div><strong>${esc(headline)}</strong> — ${esc(w.recommendation)}${esc(note)}</div>
+               ${transitTip}
              </div>`;
         }
 
