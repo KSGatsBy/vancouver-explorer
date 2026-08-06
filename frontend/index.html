@@ -930,26 +930,13 @@
         </div>
       </div>
 
-      <!-- Segmented Tab Navigation -->
-      <nav class="segmented-control">
-        <button class="segment-btn active" data-tab="tab-activities">
-          🗺️ Activity Library & Map
-        </button>
-        <button class="segment-btn" data-tab="tab-itinerary">
-          📅 Day Schedule & Weather Timeline
-        </button>
-        <button class="segment-btn" data-tab="tab-budget">
-          📊 Budget Analytics & Visual Charts
-        </button>
-      </nav>
-
-      <!-- TAB 1: ACTIVITIES LIBRARY & CARTO MAP -->
-      <div id="tab-activities" class="tab-panel active">
+      <!-- SECTION 2: STANDALONE ACTIVITY LIBRARY & MAP (下滑第一站) -->
+      <section id="section-activities" style="margin-bottom: 40px;">
         <div class="grid-2col">
-          <!-- Left Column: Activity List & CartoDB Dark Map -->
-          <section class="sf-card" aria-labelledby="activities-heading">
+          <!-- Left Column (65% width): Leaflet Map & Saved Activity Cards -->
+          <div class="sf-card">
             <div class="section-label">EXPLORE & LOCATE</div>
-            <h2 id="activities-heading">Saved Destination Cards</h2>
+            <h2 id="activities-heading">Interactive Activity Map & Library</h2>
 
             <div class="filter-bar">
               <label for="tag-filter" style="margin-top:0; flex:1;">Filter Activities by Tag
@@ -958,10 +945,10 @@
               <button id="clear-filter" class="secondary small" type="button">Clear</button>
             </div>
 
-            <!-- Leaflet Interactive CartoDB Dark Map -->
-            <div id="vancouver-map"></div>
+            <!-- Leaflet Interactive CartoDB Dark Map (480px) -->
+            <div id="map" style="width: 100%; height: 480px; border-radius: 16px; margin-top: 16px; margin-bottom: 24px; z-index: 1; border: 1px solid var(--glass-border);"></div>
 
-            <h3>Activity Cards</h3>
+            <h3>Saved Destination Cards</h3>
             <div id="activity-list" class="activity-grid">
               <div class="empty-placeholder">
                 <div class="empty-icon">🏔️</div>
@@ -969,10 +956,10 @@
                 <div class="empty-sub">Connecting to local database...</div>
               </div>
             </div>
-          </section>
+          </div>
 
-          <!-- Right Column: Add Activity Form (Sticky Sidebar) -->
-          <section class="sf-card sticky-sidebar" aria-labelledby="add-activity-heading">
+          <!-- Right Column (35% width): Add Activity Form (Sticky Sidebar) -->
+          <div class="sf-card sticky-sidebar">
             <div class="section-label">NEW DESTINATION</div>
             <h2 id="add-activity-heading">Add Activity</h2>
             <form id="activity-form">
@@ -986,118 +973,130 @@
               </label>
 
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 6px;">
-                <label style="margin-top:0;">Latitude <input name="lat" type="number" step="any" placeholder="49.3427"></label>
-                <label style="margin-top:0;">Longitude <input name="lng" type="number" step="any" placeholder="-123.1147"></label>
+                <label style="margin-top:0;">Latitude <input id="latitude" name="lat" type="number" step="any" placeholder="49.3427"></label>
+                <label style="margin-top:0;">Longitude <input id="longitude" name="lng" type="number" step="any" placeholder="-123.1147"></label>
               </div>
 
-              <button type="submit" style="width: 100%;">+ Add Activity to Library</button>
+              <button type="submit" style="width: 100%; margin-top: 20px;">+ Add Activity to Library</button>
               <div id="activity-status" class="status" role="status"></div>
             </form>
-          </section>
+          </div>
         </div>
-      </div>
+      </section>
 
-      <!-- TAB 2: DAY SCHEDULE & TIMELINE -->
-      <div id="tab-itinerary" class="tab-panel">
-        <div class="grid-2col">
-          <!-- Left Column: Daily Schedule & Vertical Timeline -->
-          <section class="sf-card" aria-labelledby="itinerary-heading">
-            <div class="section-label" style="display: flex; justify-content: space-between; align-items: center;">
-              <span>SCHEDULE & MCP WEATHER</span>
-              <div style="display: flex; gap: 8px; align-items: center;">
-                <button id="open-ai-planner-btn" class="purple small" type="button" style="margin-top:0;">
-                  🤖 AI Smart Planner
-                </button>
-                <button id="smart-swap-btn" class="amber small" type="button" style="margin-top:0;">
-                  ⚡ Smart Rain Swap
-                </button>
-                <!-- Export Dropdown -->
-                <div class="export-dropdown">
-                  <button id="export-btn" class="secondary small" type="button" style="margin-top:0;">
-                    📥 Export Plan ▼
+      <!-- SECTION 3: SCHEDULE & ANALYTICS DUAL SECTION (下滑第二站) -->
+      <section id="section-analytics">
+        <!-- Segmented Tab Navigation for Section 3 Only -->
+        <nav class="segmented-control">
+          <button class="segment-btn active" data-tab="tab-itinerary">
+            📅 Day Schedule & Weather Timeline
+          </button>
+          <button class="segment-btn" data-tab="tab-budget">
+            📊 Budget Analytics & Visual Charts
+          </button>
+        </nav>
+
+        <!-- TAB 1 inside Section 3: DAY SCHEDULE & TIMELINE -->
+        <div id="tab-itinerary" class="tab-panel active">
+          <div class="grid-2col">
+            <!-- Left Column: Daily Schedule & Vertical Timeline -->
+            <section class="sf-card" aria-labelledby="itinerary-heading">
+              <div class="section-label" style="display: flex; justify-content: space-between; align-items: center;">
+                <span>SCHEDULE & MCP WEATHER</span>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                  <button id="open-ai-planner-btn" class="purple small" type="button" style="margin-top:0;">
+                    🤖 AI Smart Planner
                   </button>
-                  <div id="export-menu" class="export-menu">
-                    <button class="export-item" type="button" id="export-ical">🗓️ Export iCal (.ics)</button>
-                    <button class="export-item" type="button" id="export-json">📄 Export JSON</button>
-                    <button class="export-item" type="button" id="export-print">🖨️ Print / Save PDF</button>
+                  <button id="smart-swap-btn" class="amber small" type="button" style="margin-top:0;">
+                    ⚡ Smart Rain Swap
+                  </button>
+                  <!-- Export Dropdown -->
+                  <div class="export-dropdown">
+                    <button id="export-btn" class="secondary small" type="button" style="margin-top:0;">
+                      📥 Export Plan ▼
+                    </button>
+                    <div id="export-menu" class="export-menu">
+                      <button class="export-item" type="button" id="export-ical">🗓️ Export iCal (.ics)</button>
+                      <button class="export-item" type="button" id="export-json">📄 Export JSON</button>
+                      <button class="export-item" type="button" id="export-print">🖨️ Print / Save PDF</button>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            <h2 id="itinerary-heading">Daily Schedule Timeline</h2>
+              <h2 id="itinerary-heading">Daily Schedule Timeline</h2>
 
-            <!-- 7-Day Weather Outlook Horizon Bar -->
-            <div class="weather-outlook-bar" id="weather-outlook-bar"></div>
+              <!-- 7-Day Weather Outlook Horizon Bar -->
+              <div class="weather-outlook-bar" id="weather-outlook-bar"></div>
 
-            <div class="filter-bar" style="flex-wrap: wrap;">
-              <label style="flex: 1 1 10rem; margin-top:0;">Date 
-                <input id="itinerary-date" type="date" value="2026-08-01">
-              </label>
-              <label style="flex: 0 1 6rem; margin-top:0;">Group Size 
-                <input id="itinerary-group-size" type="number" min="1" value="1">
-              </label>
-              <button id="load-itinerary" class="secondary" type="button" style="margin-top:0;">Load Plan</button>
-            </div>
-
-            <div id="itinerary-summary" style="font-size: 14px; color: var(--apple-teal); margin: 16px 0; font-weight: 600;"></div>
-            <div id="itinerary-entries">
-              <div class="empty-placeholder">
-                <div class="empty-icon">📅</div>
-                <div class="empty-title">No Activities Scheduled</div>
-                <div class="empty-sub">Select a date and click 'Load Plan' or launch the AI Smart Planner.</div>
+              <div class="filter-bar" style="flex-wrap: wrap;">
+                <label style="flex: 1 1 10rem; margin-top:0;">Date 
+                  <input id="itinerary-date" type="date" value="2026-08-01">
+                </label>
+                <label style="flex: 0 1 6rem; margin-top:0;">Group Size 
+                  <input id="itinerary-group-size" type="number" min="1" value="1">
+                </label>
+                <button id="load-itinerary" class="secondary" type="button" style="margin-top:0;">Load Plan</button>
               </div>
-            </div>
-          </section>
 
-          <!-- Right Column: Add Entry Sidebar -->
-          <section class="sf-card sticky-sidebar" aria-labelledby="add-entry-heading">
-            <div class="section-label">ADD TO DAY</div>
-            <h2 id="add-entry-heading">Schedule Activity</h2>
-            <form id="entry-form">
-              <label>Select Activity
-                <select name="activity_id" id="activity-select" required></select>
-              </label>
-              <label>Notes & Preparation <textarea name="notes" rows="3" placeholder="Camera gear, parking reservations..."></textarea></label>
-              <button type="submit" style="width: 100%;">+ Add Entry to Day</button>
-              <div id="entry-status" class="status" role="status"></div>
-            </form>
-          </section>
+              <div id="itinerary-summary" style="font-size: 14px; color: var(--apple-teal); margin: 16px 0; font-weight: 600;"></div>
+              <div id="itinerary-entries">
+                <div class="empty-placeholder">
+                  <div class="empty-icon">📅</div>
+                  <div class="empty-title">No Activities Scheduled</div>
+                  <div class="empty-sub">Select a date and click 'Load Plan' or launch the AI Smart Planner.</div>
+                </div>
+              </div>
+            </section>
+
+            <!-- Right Column: Add Entry Sidebar -->
+            <section class="sf-card sticky-sidebar" aria-labelledby="add-entry-heading">
+              <div class="section-label">ADD TO DAY</div>
+              <h2 id="add-entry-heading">Schedule Activity</h2>
+              <form id="entry-form">
+                <label>Select Activity
+                  <select name="activity_id" id="activity-select" required></select>
+                </label>
+                <label>Notes & Preparation <textarea name="notes" rows="3" placeholder="Camera gear, parking reservations..."></textarea></label>
+                <button type="submit" style="width: 100%;">+ Add Entry to Day</button>
+                <div id="entry-status" class="status" role="status"></div>
+              </form>
+            </section>
+          </div>
         </div>
-      </div>
 
-      <!-- TAB 3: WEEK BUDGET & ANALYTICS -->
-      <div id="tab-budget" class="tab-panel">
-        <div class="grid-2col">
-          <section class="sf-card" aria-labelledby="budget-heading">
-            <div class="section-label">ANALYTICS & CHARTS</div>
-            <h2 id="budget-heading">7-Day Spending Forecast</h2>
-            <p style="font-size: 13.5px; color: var(--text-sub); margin-bottom: 20px;">
-              Visual spending analysis calculated for 7 consecutive days starting from active date:
-              <code>sum(activity cost) &times; group size</code>.
-            </p>
+        <!-- TAB 2 inside Section 3: WEEK BUDGET & ANALYTICS -->
+        <div id="tab-budget" class="tab-panel">
+          <div class="grid-2col">
+            <section class="sf-card" aria-labelledby="budget-heading">
+              <div class="section-label">ANALYTICS & CHARTS</div>
+              <h2 id="budget-heading">7-Day Spending Forecast</h2>
+              <p style="font-size: 13.5px; color: var(--text-sub); margin-bottom: 20px;">
+                Visual spending analysis calculated for 7 consecutive days starting from active date:
+                <code>sum(activity cost) &times; group size</code>.
+              </p>
 
-            <!-- SVG Bar Chart -->
-            <div class="chart-container">
-              <h3 style="margin-top:0; font-size:14px; color:var(--text-sub);">Daily Expenditure Trend</h3>
-              <div id="budget-chart-wrapper">
-                <svg id="budget-svg-chart" class="svg-bar-chart" viewBox="0 0 600 200"></svg>
+              <!-- SVG Bar Chart -->
+              <div class="chart-container">
+                <h3 style="margin-top:0; font-size:14px; color:var(--text-sub);">Daily Expenditure Trend</h3>
+                <div id="budget-chart-wrapper">
+                  <svg id="budget-svg-chart" class="svg-bar-chart" viewBox="0 0 600 200"></svg>
+                </div>
               </div>
-            </div>
 
-            <!-- Table View -->
-            <div id="budget-table" style="margin-top:20px;">
-              <div class="empty-placeholder">
-                <div class="empty-icon">📊</div>
-                <div class="empty-title">Budget Calculation Pending</div>
-                <div class="empty-sub">Load a day plan to calculate weekly budget analytics.</div>
+              <!-- Table View -->
+              <div id="budget-table" style="margin-top:20px;">
+                <div class="empty-placeholder">
+                  <div class="empty-icon">📊</div>
+                  <div class="empty-title">Budget Calculation Pending</div>
+                  <div class="empty-sub">Load a day plan to calculate weekly budget analytics.</div>
+                </div>
               </div>
-            </div>
-          </section>
+            </section>
 
-          <!-- Apple Fitness-style Rings Widget -->
-          <section class="sf-card sticky-sidebar" aria-labelledby="rings-heading">
-            <div class="section-label">RATIO BREAKDOWN</div>
+            <!-- Apple Fitness-style Rings Widget -->
+            <section class="sf-card sticky-sidebar" aria-labelledby="rings-heading">
+              <div class="section-label">RATIO BREAKDOWN</div>
             <h2 id="rings-heading">Activity Rings</h2>
             <div class="rings-widget">
               <div class="ring-container">
@@ -1323,22 +1322,40 @@
 
     function initMap() {
       if (map) return;
-      map = L.map('vancouver-map').setView([49.2827, -123.1207], 11);
+      const mapEl = document.getElementById("map") || document.getElementById("vancouver-map");
+      if (!mapEl) return;
+
+      map = L.map(mapEl.id).setView([49.2827, -123.1207], 11);
       L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
         attribution: '&copy; CARTO & OpenStreetMap',
         maxZoom: 18
       }).addTo(map);
+
+      // 地图重绘机制 (Critical Fix)
+      setTimeout(() => {
+        if (map) {
+          map.invalidateSize();
+        }
+      }, 300);
+
+      window.addEventListener('scroll', () => {
+        if (map) map.invalidateSize();
+      }, { passive: true, once: true });
 
       // 地图点击拾取坐标 (Click-to-Coordinate)
       map.on('click', (e) => {
         const lat = Number(e.latlng.lat.toFixed(4));
         const lng = Number(e.latlng.lng.toFixed(4));
 
+        const latInput = document.getElementById("latitude") || document.querySelector('input[name="lat"]');
+        const lngInput = document.getElementById("longitude") || document.querySelector('input[name="lng"]');
+        if (latInput) latInput.value = lat;
+        if (lngInput) lngInput.value = lng;
+
         const form = document.getElementById("activity-form");
         if (form) {
           if (form.elements["lat"]) form.elements["lat"].value = lat;
           if (form.elements["lng"]) form.elements["lng"].value = lng;
-          setStatus("activity-status", `📍 Clicked coordinates filled: ${lat}, ${lng}`, "ok");
         }
 
         if (clickMarker) map.removeLayer(clickMarker);
@@ -1358,6 +1375,8 @@
             <div style="font-size:10px; color:#a5b4fc; margin-top:2px;">Auto-filled into form</div>
           </div>
         `).openPopup();
+
+        setStatus("activity-status", `📍 Clicked coordinates filled: ${lat}, ${lng}`, "ok");
       });
     }
 
