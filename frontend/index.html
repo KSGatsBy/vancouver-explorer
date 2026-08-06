@@ -52,7 +52,10 @@
       box-sizing: border-box;
       border-radius: 0 !important; /* Strict Pixel Principle: No Round Corners */
       image-rendering: pixelated !important;
-      -webkit-font-smoothing: none;
+      image-rendering: crisp-edges !important;
+      font-smooth: never !important;
+      -webkit-font-smoothing: none !important;
+      text-rendering: geometricPrecision;
     }
 
     body {
@@ -548,7 +551,7 @@
       color: #1f2937 !important;
     }
 
-    /* Inputs & Form Controls */
+    /* Inputs, Selects & Option De-modernization */
     label {
       font-family: var(--font-pixel-heading);
       font-size: 10px;
@@ -556,16 +559,26 @@
       margin-top: 12px;
     }
 
-    input, select, textarea {
+    input, select, textarea, option {
       font-family: var(--font-pixel-body) !important;
-      font-size: 20px;
-      color: #311e10;
-      background: #fff8e7 !important;
-      border: 3px solid #5c381c !important;
+      font-size: 22px !important;
+      color: #311e10 !important;
+      background-color: #f7e2b7 !important;
+      border: 3px solid #3a2212 !important;
       padding: 8px 10px;
       margin-top: 4px;
-      outline: none;
-      box-shadow: inset 2px 2px 0px #c4a066 !important;
+      outline: none !important;
+      box-shadow: inset 2px 2px 0px #d6b26d !important;
+    }
+
+    select option {
+      background-color: #fceab8 !important;
+      color: #311e10 !important;
+    }
+
+    select option:hover, select option:focus, select option:checked {
+      background-color: #f7a81b !important;
+      color: #311e10 !important;
     }
 
     input:focus, select:focus, textarea:focus {
@@ -660,15 +673,68 @@
       background: #f7a81b !important;
     }
 
-    /* Chart & Rings Container */
+    /* Chart & Table De-modernization */
     .chart-container, .rings-widget {
       background: #e5cb8b !important;
       border: 4px solid #5c381c !important;
       box-shadow: inset 2px 2px 0px #fff0ca !important;
     }
 
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: var(--font-pixel-body);
+      font-size: 21px;
+      background: #fceab8;
+      border: 4px solid #5c381c;
+    }
+
+    th {
+      font-family: var(--font-pixel-heading);
+      font-size: 10px;
+      color: #5c381c;
+      background: #e5cb8b !important;
+      padding: 10px 14px;
+      border-bottom: 3px solid #5c381c;
+    }
+
+    td {
+      padding: 10px 14px;
+      color: #311e10;
+      border-bottom: 2px solid #d6b26d;
+    }
+
+    tfoot tr, tr.total, tr.total td, tfoot td {
+      background: #e2c275 !important;
+      color: #311e10 !important;
+      font-family: var(--font-pixel-heading) !important;
+      font-size: 11px !important;
+      border-top: 4px solid #5c381c !important;
+    }
+
+    /* Activity Rings SVG Stardew Colors */
     .ring-circle-bg {
-      stroke: #c4a066;
+      stroke: #c4a066 !important;
+      stroke-width: 4 !important;
+    }
+
+    .ring-circle {
+      stroke-width: 4 !important;
+      filter: none !important;
+    }
+
+    #ring-outdoor {
+      stroke: #4b852f !important; /* Stardew Nature Green */
+    }
+
+    #ring-free {
+      stroke: #31859c !important; /* Stardew Sapphire Blue */
+    }
+
+    .ring-label {
+      font-family: var(--font-pixel-body);
+      font-size: 21px;
+      color: #311e10;
     }
 
     /* Status Notifications */
@@ -2230,29 +2296,29 @@
 
       const rows = budget.days.map(day => `
         <tr class="${day.entry_count ? "" : "blank"}">
-          <td style="padding:12px 16px; border-bottom:1px solid rgba(255,255,255,0.05);">${esc(day.date)}</td>
-          <td style="padding:12px 16px; border-bottom:1px solid rgba(255,255,255,0.05); text-align:right;">${esc(day.entry_count)}</td>
-          <td style="padding:12px 16px; border-bottom:1px solid rgba(255,255,255,0.05); text-align:right;">${esc(day.group_size)}</td>
-          <td style="padding:12px 16px; border-bottom:1px solid rgba(255,255,255,0.05); text-align:right; font-weight:600;">${esc(formatMoney(day.total_cost))}</td>
+          <td style="padding:10px 14px; border-bottom:2px solid #d6b26d; color:#311e10;">${esc(day.date)}</td>
+          <td style="padding:10px 14px; border-bottom:2px solid #d6b26d; text-align:right; color:#311e10;">${esc(day.entry_count)}</td>
+          <td style="padding:10px 14px; border-bottom:2px solid #d6b26d; text-align:right; color:#311e10;">${esc(day.group_size)}</td>
+          <td style="padding:10px 14px; border-bottom:2px solid #d6b26d; text-align:right; font-weight:700; color:#311e10;">${esc(formatMoney(day.total_cost))}</td>
         </tr>
       `).join("");
 
       document.getElementById("budget-table").innerHTML = `
-        <div style="overflow-x:auto; border-radius:16px; border:1px solid var(--glass-border);">
-          <table style="width:100%; border-collapse:collapse; font-size:13.5px;">
+        <div style="overflow-x:auto; border:4px solid #5c381c; background:#fceab8;">
+          <table style="width:100%; border-collapse:collapse; font-family:var(--font-pixel-body); font-size:21px;">
             <thead>
-              <tr style="background:rgba(255,255,255,0.04); font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-sub);">
-                <th style="padding:12px 16px; text-align:left;">Date (${esc(budget.start_date)} → ${esc(budget.end_date)})</th>
-                <th style="padding:12px 16px; text-align:right;">Entries</th>
-                <th style="padding:12px 16px; text-align:right;">Group Size</th>
-                <th style="padding:12px 16px; text-align:right;">Day Total</th>
+              <tr style="background:#e5cb8b; font-family:var(--font-pixel-heading); font-size:10px; color:#5c381c; border-bottom:3px solid #5c381c;">
+                <th style="padding:10px 14px; text-align:left;">Date (${esc(budget.start_date)} → ${esc(budget.end_date)})</th>
+                <th style="padding:10px 14px; text-align:right;">Entries</th>
+                <th style="padding:10px 14px; text-align:right;">Group Size</th>
+                <th style="padding:10px 14px; text-align:right;">Day Total</th>
               </tr>
             </thead>
             <tbody>${rows}</tbody>
             <tfoot>
-              <tr style="background:rgba(59, 130, 246, 0.18); font-weight:700; color:#fff;">
-                <td colspan="3" style="padding:14px 16px;">7-Day Estimated Total</td>
-                <td style="padding:14px 16px; text-align:right; font-size:15px;">${esc(formatMoney(budget.total_cost))}</td>
+              <tr style="background:#e2c275; font-family:var(--font-pixel-heading); font-size:11px; color:#311e10; border-top:4px solid #5c381c;">
+                <td colspan="3" style="padding:12px 14px;">7-Day Estimated Total</td>
+                <td style="padding:12px 14px; text-align:right; font-size:13px;">${esc(formatMoney(budget.total_cost))}</td>
               </tr>
             </tfoot>
           </table>
