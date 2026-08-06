@@ -9,10 +9,10 @@
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#090d16">
 
-  <!-- Google Fonts: Plus Jakarta Sans & Inter -->
+  <!-- Google Fonts: Pixel Fonts Press Start 2P & VT323 -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
 
   <!-- Leaflet.js Interactive Map CSS & JS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -20,72 +20,71 @@
 
   <style>
     :root {
-      /* Premium Typography & Theme Palette */
-      --font-main: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      
-      --text-heading: #ffffff;
-      --text-main: rgba(255, 255, 255, 0.88);
-      --text-sub: rgba(255, 255, 255, 0.58);
-      --text-dim: rgba(255, 255, 255, 0.38);
-      
-      /* Vibrant Accent Colors & Gradients */
-      --accent-blue-gradient: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-      --accent-blue-glow: 0 8px 24px -4px rgba(59, 130, 246, 0.45);
-      
-      --accent-purple-gradient: linear-gradient(135deg, #a855f7 0%, #7e22ce 100%);
-      --accent-purple-glow: 0 8px 24px -4px rgba(168, 85, 247, 0.45);
+      /* Stardew Valley Pixel Art Color Palette */
+      --font-pixel-heading: 'Press Start 2P', cursive, monospace;
+      --font-pixel-body: 'VT323', monospace;
 
-      --accent-amber-gradient: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-      --accent-amber-glow: 0 8px 24px -4px rgba(245, 158, 11, 0.45);
+      --stardew-grass-bg: #4b6e28;
+      --stardew-grass-pattern: #3d5a20;
+      
+      --wood-dark: #2a160a;
+      --wood-mid: #5c3517;
+      --wood-light: #9c6028;
+      
+      --parchment-bg: #fceab8;
+      --parchment-dark: #e5cb8b;
+      --parchment-border: #6d4621;
+      
+      --text-dark: #311e10;
+      --text-sub: #5c381c;
+      --text-gold: #f7a81b;
+      
+      --pixel-gold: #f59e0b;
+      --pixel-gold-shadow: #b45309;
 
-      --apple-green: #30D158;
-      --apple-orange: #FF9F0A;
-      --apple-red: #FF453A;
-      --apple-purple: #BF5AF2;
-      --apple-teal: #64D2FF;
-
-      /* Multi-layered Glassmorphism System */
-      --glass-bg: rgba(15, 23, 42, 0.65);
-      --glass-card: rgba(30, 41, 59, 0.45);
-      --glass-card-hover: rgba(30, 41, 59, 0.65);
-      --glass-blur: blur(24px) saturate(180%);
-      --glass-border: rgba(255, 255, 255, 0.08);
-      --glass-border-hover: rgba(255, 255, 255, 0.22);
-      --glass-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      --pixel-green: #388e3c;
+      --pixel-red: #d32f2f;
+      --pixel-blue: #0284c7;
+      --pixel-purple: #7b1fa2;
     }
 
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+      border-radius: 0 !important; /* Strict Pixel Principle: No Round Corners */
+      image-rendering: pixelated !important;
+      -webkit-font-smoothing: none;
+    }
 
     body {
-      font-family: var(--font-main);
-      background: radial-gradient(circle at 50% -10%, #1e1b4b 0%, #0f172a 45%, #090d16 100%);
-      background-attachment: fixed;
-      color: var(--text-main);
+      font-family: var(--font-pixel-body);
+      font-size: 20px;
+      line-height: 1.2;
+      background-color: var(--stardew-grass-bg);
+      background-image: 
+        radial-gradient(var(--stardew-grass-pattern) 15%, transparent 16%),
+        radial-gradient(var(--stardew-grass-pattern) 15%, transparent 16%);
+      background-size: 16px 16px;
+      background-position: 0 0, 8px 8px;
+      color: var(--text-dark);
       margin: 0;
       padding: 0;
       min-height: 100vh;
       width: 100%;
-      -webkit-font-smoothing: antialiased;
-      overflow-x: hidden;
     }
 
-    /* Custom Webkit Scrollbars */
+    /* Pixel Art Custom Scrollbars */
     ::-webkit-scrollbar {
-      width: 8px;
-      height: 8px;
+      width: 12px;
+      height: 12px;
     }
     ::-webkit-scrollbar-track {
-      background: rgba(15, 23, 42, 0.6);
+      background: var(--wood-dark);
     }
     ::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.15);
-      border-radius: 4px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: rgba(255, 255, 255, 0.3);
+      background: var(--wood-light);
+      border: 3px solid var(--wood-dark);
     }
 
-    /* Weather Canvas Dynamic Background */
     #weather-canvas {
       position: fixed;
       top: 0;
@@ -94,10 +93,9 @@
       height: 100vh;
       pointer-events: none;
       z-index: 0;
-      opacity: 0.65;
+      opacity: 0.55;
     }
 
-    /* App Main Viewport */
     .app-viewport {
       position: relative;
       z-index: 1;
@@ -107,298 +105,242 @@
       flex-direction: column;
     }
 
-    /* Modern Floating Glass Header Bar */
+    /* Stardew Notice Board Header Titlebar */
     .titlebar {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 16px 40px;
-      background: rgba(15, 23, 42, 0.6) !important;
-      backdrop-filter: var(--glass-blur) !important;
-      -webkit-backdrop-filter: var(--glass-blur) !important;
-      border-bottom: 1px solid var(--glass-border) !important;
+      padding: 12px 30px;
+      background: #3a2212 !important;
+      border-bottom: 5px solid #1a0e06 !important;
+      box-shadow: 0 6px 0px rgba(0,0,0,0.4);
       width: 100%;
       position: sticky;
       top: 0;
       z-index: 100;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
     }
 
     .window-title {
-      font-size: 14px;
-      font-weight: 600;
-      letter-spacing: -0.01em;
-      color: var(--text-heading);
+      font-family: var(--font-pixel-heading);
+      font-size: 12px;
+      color: #ffeab8;
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
+      text-shadow: 2px 2px 0px #000;
     }
 
     .window-title .logo-badge {
-      background: var(--accent-blue-gradient);
-      padding: 4px 10px;
-      border-radius: 8px;
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-      box-shadow: var(--accent-blue-glow);
+      background: #f7a81b;
+      color: #311e10;
+      padding: 4px 8px;
+      font-size: 10px;
+      font-family: var(--font-pixel-heading);
+      border: 3px solid #3a2212;
+      box-shadow: inset -2px -2px 0px #b45309;
+      text-shadow: none;
     }
 
     .title-controls {
       display: flex;
       align-items: center;
       gap: 16px;
+      font-family: var(--font-pixel-body);
+      font-size: 18px;
     }
 
     .tax-toggle-wrapper {
       display: flex;
       align-items: center;
       gap: 6px;
-      font-size: 12px;
-      font-weight: 500;
-      color: var(--text-sub);
+      color: #ffeab8;
       cursor: pointer;
       user-select: none;
-      padding: 4px 10px;
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid var(--glass-border);
-      border-radius: 8px;
-      transition: all 0.2s ease;
-    }
-
-    .tax-toggle-wrapper:hover {
-      background: rgba(255, 255, 255, 0.08);
-      color: var(--text-heading);
+      padding: 4px 8px;
+      background: #5c3b1e;
+      border: 3px solid #231308;
     }
 
     .currency-select {
-      background: rgba(255, 255, 255, 0.05);
-      color: var(--text-heading);
-      border: 1px solid var(--glass-border);
-      border-radius: 8px;
-      padding: 5px 10px;
-      font-size: 12px;
-      font-weight: 600;
+      font-family: var(--font-pixel-heading);
+      font-size: 10px;
+      background: #fceab8 !important;
+      color: #311e10 !important;
+      border: 3px solid #3a2212 !important;
+      padding: 4px 8px;
       cursor: pointer;
       outline: none;
-      transition: all 0.2s ease;
-    }
-
-    .currency-select:hover {
-      border-color: var(--glass-border-hover);
     }
 
     .status-capsule {
       display: flex;
       align-items: center;
       gap: 8px;
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--apple-green);
-      background: rgba(48, 209, 88, 0.1);
-      border: 1px solid rgba(48, 209, 88, 0.25);
-      padding: 5px 14px;
-      border-radius: 9999px;
+      font-family: var(--font-pixel-heading);
+      font-size: 9px;
+      color: #ffffff;
+      background: #2e7d32;
+      border: 3px solid #1b5e20;
+      padding: 6px 12px;
+      box-shadow: inset -2px -2px 0px #1b5e20, inset 2px 2px 0px #a5d6a7;
     }
 
     .status-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: var(--apple-green);
-      box-shadow: 0 0 10px var(--apple-green);
-      animation: pulseGlow 2s infinite ease-in-out;
+      width: 8px;
+      height: 8px;
+      background: #a5d6a7;
+      box-shadow: none;
     }
 
-    @keyframes pulseGlow {
-      0%, 100% { transform: scale(1); opacity: 1; }
-      50% { transform: scale(1.3); opacity: 0.6; }
-    }
-
-    /* Main Content Container */
     .main-content {
-      max-width: 1440px;
+      max-width: 1360px;
       margin: 0 auto;
-      padding: 40px;
+      padding: 30px;
       width: 100%;
       flex: 1;
     }
 
-    /* Hero Header Branding */
-    .brand-section {
-      margin-bottom: 32px;
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
-      gap: 20px;
-    }
-
     .brand-title {
-      font-size: 38px;
-      font-weight: 800;
-      letter-spacing: -0.03em;
-      margin: 0 0 8px 0;
-      background: linear-gradient(135deg, #ffffff 30%, rgba(255, 255, 255, 0.6) 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      font-family: var(--font-pixel-heading);
+      font-size: 26px;
+      letter-spacing: 0;
+      margin: 0 0 10px 0;
+      color: #fceab8;
+      text-shadow: 3px 3px 0px #2a160a, -2px -2px 0px #2a160a;
     }
 
     .brand-sub {
-      font-size: 16px;
-      color: var(--text-sub);
-      margin: 0;
-      font-weight: 400;
-      max-width: 680px;
-      line-height: 1.5;
+      font-family: var(--font-pixel-body);
+      font-size: 22px;
+      color: #e5cb8b;
+      margin: 0 0 20px 0;
+      text-shadow: 1px 1px 0px #000;
     }
 
-    /* Segmented Navigation Control */
+    /* Stardew Wood Sign Navigation Bar */
     .segmented-control {
       display: flex;
-      background: rgba(15, 23, 42, 0.6);
-      backdrop-filter: var(--glass-blur);
+      background: #3a2212;
       padding: 6px;
-      border-radius: 16px;
-      border: 1px solid var(--glass-border);
-      margin-bottom: 36px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      border: 4px solid #1f1007;
+      margin-bottom: 30px;
+      box-shadow: 4px 4px 0px rgba(0,0,0,0.4);
     }
 
     .segment-btn {
       flex: 1;
-      font-family: inherit;
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--text-sub);
-      background: transparent;
-      border: none;
-      padding: 12px 24px;
-      border-radius: 12px;
+      font-family: var(--font-pixel-heading);
+      font-size: 11px;
+      color: #d1b184;
+      background: #5c381c;
+      border: 3px solid #2a160a;
+      padding: 12px;
       cursor: pointer;
-      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-      margin: 0;
+      margin: 0 3px;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
-      box-shadow: none;
+      box-shadow: inset -3px -3px 0px #3a2212, inset 3px 3px 0px #85532b;
+      transition: none;
     }
 
     .segment-btn:hover {
-      color: var(--text-heading);
-      background: rgba(255, 255, 255, 0.04);
+      color: #ffffff;
+      background: #734825;
     }
 
     .segment-btn.active {
-      color: #ffffff;
-      background: var(--accent-blue-gradient);
-      box-shadow: var(--accent-blue-glow);
+      color: #311e10;
+      background: #f7a81b;
+      border-color: #3a2212;
+      box-shadow: inset -3px -3px 0px #b45309, inset 3px 3px 0px #ffea9f;
+      text-shadow: none;
     }
 
-    /* Tab Panels */
     .tab-panel {
       display: none;
-      animation: sfFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     .tab-panel.active {
       display: block;
     }
 
-    @keyframes sfFadeIn {
-      from { opacity: 0; transform: translateY(8px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* Fluid Grid Layout */
     .grid-2col {
       display: grid;
       grid-template-columns: 1.25fr 0.75fr;
-      gap: 32px;
+      gap: 28px;
       align-items: start;
     }
 
     @media (max-width: 1024px) {
       .grid-2col { grid-template-columns: 1fr; }
-      .main-content { padding: 24px 20px; }
-      .titlebar { padding: 14px 20px; }
-      .brand-title { font-size: 28px; }
+      .main-content { padding: 16px; }
+      .brand-title { font-size: 20px; }
     }
 
-    /* Glass Cards */
+    /* Stardew Quest Board Wooden & Parchment Card Frame */
     .sf-card {
-      background: var(--glass-card) !important;
-      backdrop-filter: var(--glass-blur) !important;
-      -webkit-backdrop-filter: var(--glass-blur) !important;
-      border: 1px solid var(--glass-border) !important;
-      border-radius: 24px;
-      padding: 28px;
+      background: #fceab8 !important;
+      border: 5px solid #3a2212 !important;
+      box-shadow: 
+        inset 4px 4px 0px #fffae8,
+        inset -4px -4px 0px #d6b26d,
+        6px 6px 0px rgba(0, 0, 0, 0.4) !important;
+      padding: 24px;
       margin-bottom: 28px;
-      box-shadow: var(--glass-shadow);
-      transition: border-color 0.3s ease, box-shadow 0.3s ease;
-    }
-
-    .sf-card:hover {
-      border-color: rgba(255, 255, 255, 0.14) !important;
-    }
-
-    .sticky-sidebar {
-      position: sticky;
-      top: 100px;
+      color: #311e10 !important;
     }
 
     .section-label {
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      color: var(--apple-teal);
+      font-family: var(--font-pixel-heading);
+      font-size: 10px;
+      color: #8b4513;
       text-transform: uppercase;
-      margin-bottom: 6px;
+      margin-bottom: 8px;
     }
 
     h2 {
-      font-size: 22px;
-      font-weight: 700;
-      letter-spacing: -0.02em;
-      margin: 0 0 20px 0;
-      color: var(--text-heading);
+      font-family: var(--font-pixel-heading);
+      font-size: 16px;
+      margin: 0 0 18px 0;
+      color: #3a2212;
+      border-bottom: 3px solid #8b4513;
+      padding-bottom: 8px;
     }
 
     h3 {
-      font-size: 16px;
-      font-weight: 600;
-      margin: 24px 0 14px 0;
-      color: var(--text-heading);
+      font-family: var(--font-pixel-heading);
+      font-size: 13px;
+      margin: 20px 0 12px 0;
+      color: #3a2212;
     }
 
-    /* Activity Library Card Styling */
+    /* Activity Quest Slot Card */
     .activity-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 20px;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 16px;
     }
 
     .activity-card {
-      background: var(--glass-card) !important;
-      border: 1px solid var(--glass-border) !important;
-      border-radius: 20px;
-      overflow: hidden;
-      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      background: #fff8e7 !important;
+      border: 4px solid #5c381c !important;
+      box-shadow: inset -3px -3px 0px #e2c275, 4px 4px 0px rgba(0,0,0,0.3) !important;
       display: flex;
       flex-direction: column;
       position: relative;
     }
 
     .activity-card:hover {
-      transform: translateY(-4px);
-      border-color: var(--glass-border-hover) !important;
-      box-shadow: 0 16px 32px -10px rgba(0, 0, 0, 0.6);
+      border-color: #3a2212 !important;
+      transform: translateY(-2px);
     }
 
     .card-cover-image {
-      height: 140px;
+      height: 120px;
       width: 100%;
+      border-bottom: 3px solid #5c381c;
       background-size: cover;
       background-position: center;
       position: relative;
@@ -407,29 +349,20 @@
     .card-cover-overlay {
       position: absolute;
       inset: 0;
-      background: linear-gradient(180deg, rgba(15, 23, 42, 0.1) 0%, rgba(15, 23, 42, 0.9) 100%);
+      background: rgba(0,0,0,0.15);
     }
 
     .card-body {
-      padding: 18px;
+      padding: 14px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
-      flex: 1;
-    }
-
-    .card-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 12px;
+      gap: 8px;
     }
 
     .card-head strong {
-      font-size: 16px;
-      font-weight: 700;
-      color: var(--text-heading);
-      line-height: 1.3;
+      font-family: var(--font-pixel-heading);
+      font-size: 12px;
+      color: #311e10;
     }
 
     .sf-badges {
@@ -437,16 +370,351 @@
       flex-wrap: wrap;
       gap: 6px;
       align-items: center;
+      font-family: var(--font-pixel-body);
+      font-size: 17px;
     }
 
     .badge-pill {
-      font-size: 11px;
-      font-weight: 600;
-      padding: 3px 10px;
-      border-radius: 8px;
-      background: rgba(255, 255, 255, 0.06);
-      color: var(--text-main);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      font-size: 16px;
+      padding: 2px 8px;
+      background: #e8cca4;
+      color: #311e10;
+      border: 2px solid #6d4621;
+    }
+
+    .badge-pill.cost {
+      background: #e0f2fe;
+      color: #0369a1;
+      border-color: #0284c7;
+    }
+
+    .badge-pill.outdoor {
+      background: #dcfce7;
+      color: #15803d;
+      border-color: #16a34a;
+    }
+
+    .badge-pill.indoor {
+      background: #f3e8ff;
+      color: #6b21a8;
+      border-color: #7e22ce;
+    }
+
+    .badge-pill.tier {
+      background: #fef3c7;
+      color: #b45309;
+      border-color: #d97706;
+    }
+
+    .tags-wrapper {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+
+    .tag-bubble {
+      font-family: var(--font-pixel-body);
+      font-size: 16px;
+      color: #5c381c;
+      background: #e6cb9c;
+      padding: 1px 6px;
+      border: 1px solid #7c4f24;
+    }
+
+    .filter-bar {
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+      margin-bottom: 16px;
+      background: #e5cb8b;
+      padding: 12px;
+      border: 3px solid #5c381c;
+    }
+
+    /* Stardew Map Frame Wrapper */
+    #vancouver-map {
+      height: 360px;
+      width: 100%;
+      border: 6px solid #3a2212 !important;
+      box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.8), 4px 4px 0px rgba(0,0,0,0.4) !important;
+      margin-top: 14px;
+      margin-bottom: 20px;
+      z-index: 1;
+    }
+
+    /* 7-Day Weather Outlook Horizon Bar */
+    .weather-outlook-bar {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .outlook-pill {
+      background: #e6cb9c;
+      border: 3px solid #5c381c;
+      padding: 8px 4px;
+      text-align: center;
+      cursor: pointer;
+      user-select: none;
+      font-family: var(--font-pixel-body);
+    }
+
+    .outlook-pill:hover {
+      background: #fceab8;
+    }
+
+    .outlook-pill.active {
+      background: #f7a81b;
+      border-color: #3a2212;
+      box-shadow: inset -2px -2px 0px #b45309;
+    }
+
+    /* Vertical Schedule Timeline Notice Board */
+    .timeline-container {
+      position: relative;
+      padding-left: 24px;
+      margin-top: 16px;
+    }
+
+    .timeline-container::before {
+      content: '';
+      position: absolute;
+      left: 8px;
+      top: 10px;
+      bottom: 10px;
+      width: 4px;
+      background: #5c381c;
+    }
+
+    .timeline-item {
+      position: relative;
+      margin-bottom: 20px;
+    }
+
+    .timeline-dot {
+      position: absolute;
+      left: -24px;
+      top: 16px;
+      width: 14px;
+      height: 14px;
+      background: #f7a81b;
+      border: 3px solid #3a2212;
+      z-index: 2;
+    }
+
+    .timeline-dot.rain {
+      background: #d32f2f;
+    }
+
+    .timeline-dot.ok {
+      background: #388e3c;
+    }
+
+    .entry-card {
+      background: #fff8e7 !important;
+      border: 4px solid #5c381c !important;
+      padding: 16px;
+      box-shadow: 3px 3px 0px rgba(0,0,0,0.3) !important;
+    }
+
+    .timeline-time-badge {
+      font-family: var(--font-pixel-heading);
+      font-size: 10px;
+      color: #8b4513;
+      margin-bottom: 6px;
+    }
+
+    /* Weather Daily Alert Banner */
+    .warning {
+      background: #fee2e2 !important;
+      border: 3px solid #b91c1c !important;
+      color: #7f1d1d !important;
+      padding: 10px;
+      margin-top: 10px;
+      font-family: var(--font-pixel-body);
+      font-size: 19px;
+    }
+
+    .warning.ok {
+      background: #dcfce7 !important;
+      border-color: #15803d !important;
+      color: #14532d !important;
+    }
+
+    .warning.muted {
+      background: #f3f4f6 !important;
+      border-color: #4b5563 !important;
+      color: #1f2937 !important;
+    }
+
+    /* Inputs & Form Controls */
+    label {
+      font-family: var(--font-pixel-heading);
+      font-size: 10px;
+      color: #3a2212;
+      margin-top: 12px;
+    }
+
+    input, select, textarea {
+      font-family: var(--font-pixel-body) !important;
+      font-size: 20px;
+      color: #311e10;
+      background: #fff8e7 !important;
+      border: 3px solid #5c381c !important;
+      padding: 8px 10px;
+      margin-top: 4px;
+      outline: none;
+      box-shadow: inset 2px 2px 0px #c4a066 !important;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: #f7a81b !important;
+    }
+
+    /* Heavy Pixel Buttons */
+    button {
+      font-family: var(--font-pixel-heading) !important;
+      font-size: 10px !important;
+      cursor: pointer;
+      background: #f7a81b !important;
+      color: #311e10 !important;
+      border: 3px solid #3a2212 !important;
+      padding: 10px 16px;
+      margin-top: 14px;
+      box-shadow: inset -3px -3px 0px #b45309, inset 3px 3px 0px #ffea9f, 3px 3px 0px #000 !important;
+      transition: none !important;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      background: #ffb733 !important;
+    }
+
+    button:active {
+      transform: translate(2px, 2px);
+      box-shadow: inset 3px 3px 0px #b45309, 1px 1px 0px #000 !important;
+    }
+
+    button.secondary {
+      background: #e6cb9c !important;
+      color: #311e10 !important;
+      border-color: #5c381c !important;
+      box-shadow: inset -3px -3px 0px #b89146, inset 3px 3px 0px #fff4d4, 3px 3px 0px #000 !important;
+    }
+
+    button.purple {
+      background: #a855f7 !important;
+      color: #ffffff !important;
+      border-color: #3a2212 !important;
+      box-shadow: inset -3px -3px 0px #6b21a8, inset 3px 3px 0px #e9d5ff, 3px 3px 0px #000 !important;
+      text-shadow: 1px 1px 0px #000;
+    }
+
+    button.amber {
+      background: #f59e0b !important;
+      color: #ffffff !important;
+      border-color: #3a2212 !important;
+      box-shadow: inset -3px -3px 0px #b45309, inset 3px 3px 0px #fef3c7, 3px 3px 0px #000 !important;
+      text-shadow: 1px 1px 0px #000;
+    }
+
+    button.danger {
+      background: #ef4444 !important;
+      color: #ffffff !important;
+      border-color: #3a2212 !important;
+      box-shadow: inset -2px -2px 0px #991b1b, 2px 2px 0px #000 !important;
+      padding: 4px 8px;
+      font-size: 9px !important;
+      margin-top: 0;
+    }
+
+    button.small {
+      padding: 5px 10px;
+      font-size: 9px !important;
+      margin-top: 0;
+    }
+
+    /* Export Dropdown */
+    .export-menu {
+      background: #fceab8;
+      border: 4px solid #3a2212;
+      box-shadow: 4px 4px 0px #000;
+    }
+
+    .export-item {
+      font-family: var(--font-pixel-body);
+      font-size: 18px;
+      color: #311e10;
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+      padding: 6px 12px;
+    }
+
+    .export-item:hover {
+      background: #f7a81b !important;
+    }
+
+    /* Chart & Rings Container */
+    .chart-container, .rings-widget {
+      background: #e5cb8b !important;
+      border: 4px solid #5c381c !important;
+      box-shadow: inset 2px 2px 0px #fff0ca !important;
+    }
+
+    .ring-circle-bg {
+      stroke: #c4a066;
+    }
+
+    /* Status Notifications */
+    .status.error {
+      color: #7f1d1d;
+      background: #fee2e2;
+      border: 3px solid #b91c1c;
+      font-family: var(--font-pixel-body);
+      font-size: 18px;
+    }
+
+    .status.ok {
+      color: #14532d;
+      background: #dcfce7;
+      border: 3px solid #15803d;
+      font-family: var(--font-pixel-body);
+      font-size: 18px;
+    }
+
+    /* Empty Placeholder */
+    .empty-placeholder {
+      border: 3px dashed #5c381c;
+      background: #f5dfa6;
+      color: #5c381c;
+    }
+
+    .empty-placeholder .empty-title {
+      font-family: var(--font-pixel-heading);
+      font-size: 13px;
+      color: #3a2212;
+    }
+
+    /* Stardew Modal Wooden Dialogs */
+    dialog {
+      background: #fceab8 !important;
+      border: 6px solid #3a2212 !important;
+      box-shadow: 
+        inset 4px 4px 0px #fffae8,
+        inset -4px -4px 0px #d6b26d,
+        10px 10px 0px rgba(0, 0, 0, 0.6) !important;
+      color: #311e10 !important;
+      animation: none;
+    }
+
+    dialog::backdrop {
+      background: rgba(0, 0, 0, 0.6);
     }
 
     .badge-pill.cost {
