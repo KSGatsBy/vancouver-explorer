@@ -618,6 +618,70 @@
       background: rgba(100, 210, 255, 0.12);
       color: var(--apple-teal);
     }
+
+    /* Forms & Inputs Modern Standardization */
+    label {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-sub);
+      margin-top: 14px;
+      width: 100%;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      font-family: inherit;
+      font-size: 13.5px;
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.05) !important;
+      border: 1px solid rgba(255, 255, 255, 0.12) !important;
+      border-radius: 8px !important;
+      padding: 11px 15px;
+      margin-top: 2px;
+      outline: none;
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: none !important;
+    }
+
+    select option {
+      background-color: #0f172a !important;
+      color: #ffffff !important;
+      padding: 10px;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: #3182ce !important;
+      box-shadow: 0 0 0 2px rgba(49, 130, 206, 0.25) !important;
+      background: rgba(255, 255, 255, 0.08) !important;
+    }
+
+    .checkbox-row {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 10px;
+      margin-top: 16px;
+      cursor: pointer;
+      user-select: none;
+      font-size: 13px;
+      color: var(--text-main);
+    }
+
+    input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      margin: 0;
+      accent-color: #3b82f6;
+      cursor: pointer;
+      appearance: auto;
+      -webkit-appearance: auto;
+    }
   </style>
 </head>
 <body>
@@ -741,9 +805,9 @@
                 <input name="is_outdoor" type="checkbox"> Outdoor Activity (Triggers MCP Rain Check)
               </label>
 
-              <div style="display: flex; gap: 10px;">
-                <label style="flex:1;">Latitude <input name="lat" type="number" step="any" placeholder="49.3427"></label>
-                <label style="flex:1;">Longitude <input name="lng" type="number" step="any" placeholder="-123.1147"></label>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 6px;">
+                <label style="margin-top:0;">Latitude <input name="lat" type="number" step="any" placeholder="49.3427"></label>
+                <label style="margin-top:0;">Longitude <input name="lng" type="number" step="any" placeholder="-123.1147"></label>
               </div>
 
               <button type="submit" style="width: 100%;">+ Add Activity to Library</button>
