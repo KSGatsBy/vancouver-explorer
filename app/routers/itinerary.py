@@ -3,17 +3,20 @@ from fastapi import APIRouter, HTTPException
 from app.db import get_connection, row_to_activity
 from app.models import (
     AIPlanRequest,
+    AIPlanResponse,
     ActivityResponse,
     ItineraryDayPatch,
     ItineraryDayResponse,
     ItineraryEntryCreate,
     ItineraryEntryPatch,
     ItineraryEntryResponse,
+    SmartSwapResponse,
+    WeatherAdvisoryResponse,
     WeatherSuggestion,
     validate_iso_date,
 )
 from app.services.cost import compute_total_cost
-from app.services import mcp_client
+from app.services import llm_engine, mcp_client
 
 router = APIRouter(tags=["itinerary"])
 
@@ -87,27 +90,39 @@ async def get_itinerary_weather(date: str):
     return [WeatherSuggestion(**item) for item in suggestions]
 
 
-import math
-
-def haversine_km(lat1: float, lng1: float, lat2: float, lng2: float) -> float:
-    """Calculates great-circle distance between two coordinates in kilometers."""
-    R = 6371.0
-    dlat = math.radians(lat2 - lat1)
-    dlng = math.radians(lng2 - lng1)
-    a = (
-        math.sin(dlat / 2) ** 2
-        + math.cos(math.radians(lat1))
-        * math.cos(math.radians(lat2))
-        * math.sin(dlng / 2) ** 2
-    )
-    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-    return R * c
-
-
-@router.post("/itinerary/{date}/smart-swap", response_model=ItineraryDayResponse)
-async def smart_swap_itinerary(date: str):
+@router.get("/itinerary/{date}/weather-advisory", response_model=WeatherAdvisoryResponse)
+async def get_itinerary_weather_advisory(date: str):
     with get_connection() as conn:
         _get_day_or_404(conn, date)
+        rows = conn.execute(
+            """
+            SELECT e.activity_id, a.name, a.is_outdoor, a.lat, a.lng
+            FROM itinerary_entries e
+            JOIN activities a ON a.id = e.activity_id
+            WHERE e.day_id = ?
+            """,
+            (date,),
+        ).fetchall()
+        daily_activities = [dict(r) for r in rows]
+
+    try:
+        suggestions = await mcp_client.suggest_indoor_or_outdoor(date)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=502,
+            detail=f"Weather service unavailable: {exc}",
+        ) from exc
+
+    advisory_data = llm_engine.run_weather_advisory(date, daily_activities, suggestions)
+    advisory_data["suggestions"] = [WeatherSuggestion(**item) for item in suggestions]
+    return WeatherAdvisoryResponse(**advisory_data)
+
+
+@router.post("/itinerary/{date}/smart-swap", response_model=SmartSwapResponse)
+async def smart_swap_itinerary(date: str):
+    with get_connection() as conn:
+        day = _get_day_or_404(conn, date)
+        group_size = day["group_size"]
         
         # 1. Fetch weather suggestions
         try:
@@ -122,7 +137,7 @@ async def smart_swap_itinerary(date: str):
         # 2. Get outdoor entries for this date
         entries = conn.execute(
             """
-            SELECT e.id, e.activity_id, a.is_outdoor, a.lat, a.lng, a.cost
+            SELECT e.id, e.activity_id, a.name, a.is_outdoor, a.lat, a.lng, a.cost
             FROM itinerary_entries e
             JOIN activities a ON a.id = e.activity_id
             WHERE e.day_id = ?
@@ -131,134 +146,104 @@ async def smart_swap_itinerary(date: str):
         ).fetchall()
 
         # 3. Find indoor activities available in catalog
-        indoor_activities = conn.execute(
+        indoor_rows = conn.execute(
             "SELECT * FROM activities WHERE is_outdoor = 0 ORDER BY id"
         ).fetchall()
 
-        # Existing activity IDs scheduled on this date
         scheduled_activity_ids = {e["activity_id"] for e in entries}
+        indoor_candidates = [
+            row_to_activity(r) for r in indoor_rows if r["id"] not in scheduled_activity_ids
+        ]
 
-        swapped_count = 0
+        target_entry = None
         for entry in entries:
             if entry["is_outdoor"] and entry["activity_id"] in rain_activity_ids:
-                target_lat = entry["lat"] if entry["lat"] is not None else 49.2827
-                target_lng = entry["lng"] if entry["lng"] is not None else -123.1207
-                target_cost = entry["cost"] or 0.0
+                target_entry = entry
+                break
 
-                candidates = []
-                for ia in indoor_activities:
-                    if ia["id"] in scheduled_activity_ids:
-                        continue
-                    ia_lat = ia["lat"] if ia["lat"] is not None else 49.2827
-                    ia_lng = ia["lng"] if ia["lng"] is not None else -123.1207
-                    ia_cost = ia["cost"] or 0.0
+        if not target_entry:
+            # Fallback to any outdoor entry if no explicit weather match
+            for entry in entries:
+                if entry["is_outdoor"]:
+                    target_entry = entry
+                    break
 
-                    dist = haversine_km(target_lat, target_lng, ia_lat, ia_lng)
-                    cost_diff = abs(ia_cost - target_cost)
-                    cost_tolerance = max(target_cost * 0.20, 10.0)
+        if not target_entry:
+            return SmartSwapResponse(
+                status="no_match_found",
+                original_activity_id=0,
+                swapped_activity=None,
+                swap_reason="当前行程中无下雨风向的户外活动需要替换。",
+                transit_suggestion="全天行程安全，无需更换活动。",
+                updated_itinerary=_build_day_response(conn, date),
+            )
 
-                    # Tier 1: <= 2.0 km & within ±20% budget
-                    # Tier 2: <= 5.0 km
-                    # Tier 3: any available indoor activity
-                    if dist <= 2.0 and cost_diff <= cost_tolerance:
-                        rank = 1
-                    elif dist <= 5.0:
-                        rank = 2
-                    else:
-                        rank = 3
+        outdoor_dict = dict(target_entry)
+        swap_result = llm_engine.run_smart_swap(outdoor_dict, indoor_candidates, group_size)
 
-                    candidates.append((rank, dist, cost_diff, ia))
+        if swap_result.get("status") == "success" and swap_result.get("swapped_activity"):
+            swapped_info = swap_result["swapped_activity"]
+            swapped_id = swapped_info["id"]
+            conn.execute(
+                """
+                UPDATE itinerary_entries 
+                SET activity_id = ?, notes = ?
+                WHERE id = ?
+                """,
+                (
+                    swapped_id,
+                    f"☔ Swapped ({swapped_info['tier_matched']}: {swapped_info['name']})",
+                    target_entry["id"],
+                ),
+            )
+            conn.commit()
 
-                candidates.sort(key=lambda x: (x[0], x[1], x[2]))
-
-                if candidates:
-                    best_match = candidates[0]
-                    available_indoor = best_match[3]
-                    dist_val = best_match[1]
-                    conn.execute(
-                        """
-                        UPDATE itinerary_entries 
-                        SET activity_id = ?, notes = ?
-                        WHERE id = ?
-                        """,
-                        (
-                            available_indoor["id"],
-                            f"☔ Swapped ({dist_val:.1f}km away, {available_indoor['name']})",
-                            entry["id"],
-                        ),
-                    )
-                    scheduled_activity_ids.remove(entry["activity_id"])
-                    scheduled_activity_ids.add(available_indoor["id"])
-                    swapped_count += 1
-
-        conn.commit()
-        return _build_day_response(conn, date)
+        updated_day = _build_day_response(conn, date)
+        swap_result["updated_itinerary"] = updated_day
+        return SmartSwapResponse(**swap_result)
 
 
-@router.post("/itinerary/{date}/ai-plan", response_model=ItineraryDayResponse)
+@router.post("/itinerary/{date}/ai-plan", response_model=AIPlanResponse)
 async def ai_plan_itinerary(date: str, body: AIPlanRequest):
     with get_connection() as conn:
         conn.execute(
             "INSERT OR IGNORE INTO itinerary_days (date, group_size) VALUES (?, 1)",
             (date,),
         )
+        day = conn.execute(
+            "SELECT group_size FROM itinerary_days WHERE date = ?", (date,)
+        ).fetchone()
+        group_size = day["group_size"] if day else 1
 
         try:
             suggestions = await mcp_client.suggest_indoor_or_outdoor(date)
         except Exception:
             suggestions = []
 
-        is_rainy = any(item.get("rain_probability", 0) >= 0.5 for item in suggestions)
-
         activities = conn.execute("SELECT * FROM activities").fetchall()
         parsed_activities = [row_to_activity(a) for a in activities]
 
-        candidates = []
-        pref = body.preference.lower()
+        ai_plan_result = llm_engine.run_ai_plan(
+            date=date,
+            max_budget=body.max_budget,
+            preference=body.preference,
+            group_size=group_size,
+            weather_data=suggestions,
+            activity_library=parsed_activities,
+        )
 
-        for a in parsed_activities:
-            cost = a["cost"] or 0.0
-            score = 0
-            is_out = a["is_outdoor"]
-            tags = [t.lower() for t in a.get("tags", [])]
-
-            if is_rainy and is_out:
-                score -= 10
-            elif not is_rainy and is_out:
-                score += 5
-
-            if pref == "outdoor" and is_out and not is_rainy:
-                score += 10
-            elif pref == "museum" and (not is_out or any(t in ["museum", "art", "gallery", "indoor"] for t in tags)):
-                score += 10
-            elif pref == "food" and any(t in ["food", "market", "cafe", "chill", "dining"] for t in tags):
-                score += 10
-            elif pref == "free" and cost == 0:
-                score += 10
-
-            candidates.append((score, a))
-
-        candidates.sort(key=lambda x: x[0], reverse=True)
-
-        selected = []
-        current_cost = 0.0
-        for score, a in candidates:
-            c = a["cost"] or 0.0
-            if current_cost + c <= body.max_budget or not selected:
-                selected.append(a)
-                current_cost += c
-                if len(selected) >= 3:
-                    break
-
+        selected = ai_plan_result.get("selected_activities", [])
         conn.execute("DELETE FROM itinerary_entries WHERE day_id = ?", (date,))
         for a in selected:
             conn.execute(
                 "INSERT INTO itinerary_entries (day_id, activity_id, notes) VALUES (?, ?, ?)",
                 (date, a["id"], f"🤖 AI Planned ({body.preference.capitalize()})"),
             )
-
         conn.commit()
-        return _build_day_response(conn, date)
+
+        ai_plan_result["updated_itinerary"] = _build_day_response(conn, date)
+        return AIPlanResponse(**ai_plan_result)
+
 
 
 

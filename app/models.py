@@ -110,3 +110,46 @@ class AIPlanRequest(BaseModel):
     preference: str = "outdoor"
     max_budget: float = 100.0
 
+
+class SmartSwapResult(BaseModel):
+    id: int
+    name: str
+    tier_matched: str
+    distance_km: float
+    cost_difference: float
+
+
+class SmartSwapResponse(BaseModel):
+    status: str
+    original_activity_id: int
+    swapped_activity: SmartSwapResult | None = None
+    swap_reason: str
+    transit_suggestion: str
+    updated_itinerary: ItineraryDayResponse | None = None
+
+
+class AIPlanActivity(BaseModel):
+    id: int
+    name: str
+    cost_per_person: float
+    reason: str
+
+
+class AIPlanResponse(BaseModel):
+    selected_activities: list[AIPlanActivity]
+    total_cost: float
+    weather_risk_level: str
+    planning_summary: str
+    updated_itinerary: ItineraryDayResponse | None = None
+
+
+class WeatherAdvisoryResponse(BaseModel):
+    date: str
+    rain_risk: bool = False
+    uv_risk: bool = False
+    high_risk_activity_ids: list[int] = Field(default_factory=list)
+    recommendation: str
+    transit_advice: str
+    suggestions: list[WeatherSuggestion] = Field(default_factory=list)
+
+

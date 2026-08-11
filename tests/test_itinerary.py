@@ -126,6 +126,10 @@ def test_smart_swap_itinerary(client):
 
     swap_res = client.post("/itinerary/2026-08-06/smart-swap")
     assert swap_res.status_code == 200
+    data = swap_res.json()
+    assert "status" in data
+    assert "transit_suggestion" in data
+    assert "updated_itinerary" in data
 
 
 def test_ai_plan_itinerary(client):
@@ -144,7 +148,10 @@ def test_ai_plan_itinerary(client):
     )
     assert res.status_code == 200
     data = res.json()
-    assert len(data["entries"]) > 0
+    assert "planning_summary" in data
+    assert len(data["selected_activities"]) > 0
+    assert len(data["updated_itinerary"]["entries"]) > 0
+
 
 
 

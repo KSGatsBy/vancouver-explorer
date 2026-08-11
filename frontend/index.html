@@ -1773,12 +1773,13 @@
       submitBtn.innerHTML = "⚡ Generating & Applying...";
 
       try {
-        await api(`/itinerary/${date}/ai-plan`, {
+        const res = await api(`/itinerary/${date}/ai-plan`, {
           method: "POST",
           body: JSON.stringify(payload),
         });
         document.getElementById("ai-planner-dialog").close();
-        setStatus("entry-status", "AI Smart Plan generated and applied to schedule.", "ok");
+        const summaryMsg = res.planning_summary || "AI Smart Plan generated and applied.";
+        setStatus("entry-status", `🤖 AI Plan (${res.weather_risk_level || 'Low'} Risk): ${summaryMsg}`, "ok");
         await loadItinerary();
       } catch (err) {
         setStatus("ai-planner-status", err.message, "error");
@@ -1796,9 +1797,14 @@
       btn.disabled = true;
       btn.textContent = "⏳ Swapping...";
       try {
-        await api(`/itinerary/${date}/smart-swap`, { method: "POST" });
+        const res = await api(`/itinerary/${date}/smart-swap`, { method: "POST" });
         await loadItinerary();
-        setStatus("entry-status", "Rainy-day outdoor activities swapped for indoor options.", "ok");
+        if (res.status === "success" && res.swapped_activity) {
+          const info = res.swapped_activity;
+          setStatus("entry-status", `☔ Smart Swap (${info.tier_matched}): ${res.swap_reason}`, "ok");
+        } else {
+          setStatus("entry-status", res.swap_reason || "No swap needed.", "ok");
+        }
       } catch (err) {
         setStatus("entry-status", err.message, "error");
       } finally {
