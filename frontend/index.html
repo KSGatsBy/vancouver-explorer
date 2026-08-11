@@ -159,20 +159,20 @@
       color: var(--text-sub);
       cursor: pointer;
       user-select: none;
-      padding: 4px 10px;
-      background: rgba(255, 255, 255, 0.03);
+      padding: 5px 12px;
+      background: #f1f5f9;
       border: 1px solid var(--glass-border);
       border-radius: 8px;
       transition: all 0.2s ease;
     }
 
     .tax-toggle-wrapper:hover {
-      background: rgba(255, 255, 255, 0.08);
+      background: #e2e8f0;
       color: var(--text-heading);
     }
 
     .currency-select {
-      background: rgba(255, 255, 255, 0.05);
+      background: #f8fafc;
       color: var(--text-heading);
       border: 1px solid var(--glass-border);
       border-radius: 8px;
@@ -186,6 +186,7 @@
 
     .currency-select:hover {
       border-color: var(--glass-border-hover);
+      background: #ffffff;
     }
 
     .status-capsule {
@@ -704,43 +705,80 @@
 
     /* Standardized Modern Light Buttons (.btn / button) */
     button, .btn {
-      background: #2563eb !important;
-      color: #ffffff !important;
-      border: none !important;
-      border-radius: 8px !important;
-      padding: 10px 18px !important;
-      font-size: 0.9rem !important;
-      font-weight: 600 !important;
-      height: auto !important;
-      min-height: 40px !important;
-      display: inline-flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-      cursor: pointer !important;
-      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25) !important;
-      transition: all 0.2s ease !important;
+      background: #2563eb;
+      color: #ffffff;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 18px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      height: auto;
+      min-height: 40px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+      transition: all 0.2s ease;
     }
 
     button:hover, .btn:hover {
-      background: #1d4ed8 !important;
-      transform: translateY(-1px) !important;
+      background: #1d4ed8;
+      transform: translateY(-1px);
     }
 
     button.secondary, .btn-secondary {
-      background: #f1f5f9 !important;
-      color: #0f172a !important;
-      box-shadow: none !important;
-      border: 1px solid #cbd5e1 !important;
+      background: #f1f5f9;
+      color: #0f172a;
+      box-shadow: none;
+      border: 1px solid #cbd5e1;
     }
 
     button.secondary:hover, .btn-secondary:hover {
-      background: #e2e8f0 !important;
+      background: #e2e8f0;
+      color: #0f172a;
+    }
+
+    button.purple, .btn-purple {
+      background: linear-gradient(135deg, #9333ea 0%, #6b21a8 100%);
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(147, 51, 234, 0.3);
+      border: none;
+    }
+
+    button.purple:hover, .btn-purple:hover {
+      background: linear-gradient(135deg, #7e22ce 0%, #581c87 100%);
+      transform: translateY(-1px);
+    }
+
+    button.amber, .btn-amber {
+      background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(217, 119, 6, 0.3);
+      border: none;
+    }
+
+    button.amber:hover, .btn-amber:hover {
+      background: linear-gradient(135deg, #b45309 0%, #92400e 100%);
+      transform: translateY(-1px);
+    }
+
+    button.danger, .btn-danger {
+      background: #dc2626;
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25);
+      border: none;
+    }
+
+    button.danger:hover, .btn-danger:hover {
+      background: #b91c1c;
+      transform: translateY(-1px);
     }
 
     button.small, .btn-sm {
-      min-height: 32px !important;
-      padding: 6px 12px !important;
-      font-size: 0.8rem !important;
+      min-height: 32px;
+      padding: 6px 12px;
+      font-size: 0.8rem;
     }
 
     /* Standardized Light Glass Forms & Inputs */
@@ -923,6 +961,11 @@
       box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.05) !important;
     }
 
+    .news-feed-card h3,
+    .route-map-card h3 {
+      color: var(--text-heading) !important;
+    }
+
     .news-list-container {
       display: flex;
       flex-direction: column;
@@ -1097,110 +1140,6 @@
     /* Immersive Hero Banner Section (100vh) */
     .hero-section {
       position: relative;
-      width: 100%;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      text-align: center;
-      overflow: hidden;
-      background: #090d16 url('https://images.unsplash.com/photo-1559511260-66a654ae982a?auto=format&fit=crop&w=1920&q=80') center/cover no-repeat;
-    }
-
-    .hero-overlay {
-      position: absolute;
-      inset: 0;
-      background: radial-gradient(circle at 50% 40%, rgba(15, 23, 42, 0.35) 0%, rgba(9, 13, 22, 0.75) 80%, rgba(9, 13, 22, 0.95) 100%),
-                  linear-gradient(180deg, rgba(9, 13, 22, 0.2) 0%, rgba(9, 13, 22, 0.85) 100%);
-      z-index: 1;
-    }
-
-    .hero-content {
-      position: relative;
-      z-index: 2;
-      max-width: 900px;
-      padding: 0 24px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      animation: heroFadeUp 1s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-
-    @keyframes heroFadeUp {
-      from { opacity: 0; transform: translateY(30px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .hero-badge {
-      display: inline-block;
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      color: var(--apple-teal);
-      background: rgba(100, 210, 255, 0.12);
-      border: 1px solid rgba(100, 210, 255, 0.3);
-      padding: 6px 18px;
-      border-radius: 9999px;
-      margin-bottom: 20px;
-      backdrop-filter: blur(12px);
-      box-shadow: 0 0 20px rgba(100, 210, 255, 0.2);
-    }
-
-    .hero-title {
-      font-size: clamp(3.5rem, 8vw, 6.5rem);
-      font-weight: 800;
-      letter-spacing: 14px;
-      text-transform: uppercase;
-      margin: 0;
-      color: #ffffff;
-      background: linear-gradient(180deg, #ffffff 40%, rgba(255, 255, 255, 0.7) 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      text-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
-      line-height: 1.05;
-    }
-
-    .hero-subtitle {
-      font-size: clamp(1rem, 2vw, 1.35rem);
-      font-weight: 400;
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      color: rgba(255, 255, 255, 0.85);
-      margin: 18px 0 36px 0;
-      text-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-    }
-
-    .hero-actions {
-      display: flex;
-      gap: 16px;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-
-    .hero-btn {
-      text-decoration: none;
-      font-size: 14px;
-      font-weight: 600;
-      padding: 14px 28px;
-      border-radius: 14px;
-      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .hero-btn.primary-btn {
-      color: #ffffff;
-      background: var(--accent-blue-gradient);
-      box-shadow: 0 10px 30px -5px rgba(59, 130, 246, 0.5);
-    }
-
-    /* Hero Section Light Mode Refinement */
-    .hero-section {
-      position: relative;
       width: 100vw;
       min-height: 100vh;
       display: flex;
@@ -1209,13 +1148,14 @@
       align-items: center;
       text-align: center;
       overflow: hidden;
-      background: url('https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=2000&q=85') center/cover no-repeat;
+      background: #0f172a url('https://images.unsplash.com/photo-1559511260-66a654ae982a?auto=format&fit=crop&w=2560&q=90') center/cover no-repeat;
     }
 
     .hero-overlay {
       position: absolute;
       inset: 0;
-      background: linear-gradient(180deg, rgba(255, 255, 255, 0.4) 0%, rgba(248, 250, 252, 0.95) 100%);
+      background: radial-gradient(circle at 50% 40%, rgba(255, 255, 255, 0.25) 0%, rgba(248, 250, 252, 0.75) 75%, rgba(248, 250, 252, 0.98) 100%),
+                  linear-gradient(180deg, rgba(255, 255, 255, 0.15) 0%, rgba(248, 250, 252, 0.95) 100%);
       z-index: 1;
     }
 
@@ -1370,10 +1310,14 @@
       position: relative;
       box-sizing: border-box;
       padding: 60px 40px;
-      background-color: #f8fafc !important;
       color: #0f172a !important;
       z-index: 10;
       overflow: hidden;
+    }
+
+    .activity-library-section,
+    .schedule-analytics-section {
+      background-color: #f8fafc !important;
     }
 
     .activity-library-section::before,
@@ -1571,90 +1515,6 @@
       transform: none !important;
     }
 
-    /* Vancouver Live Pulse & News Card Light Styles */
-    .news-feed-card {
-      background: #ffffff !important;
-      backdrop-filter: blur(12px) !important;
-      -webkit-backdrop-filter: blur(12px) !important;
-      border: 1px solid #e2e8f0 !important;
-      border-radius: 20px !important;
-      padding: 22px !important;
-      box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.05) !important;
-    }
-
-    .news-list-container {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      margin-top: 8px;
-    }
-
-    .news-item {
-      display: block;
-      padding: 12px 14px;
-      background: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 12px;
-      text-decoration: none;
-      transition: all 0.2s ease;
-      color: inherit;
-    }
-
-    .news-item:hover {
-      background: #f1f5f9;
-      border-color: #93c5fd;
-      transform: translateY(-1px);
-    }
-
-    .news-item-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 6px;
-    }
-
-    .news-chip {
-      font-size: 10px;
-      font-weight: 700;
-      padding: 2px 8px;
-      border-radius: 9999px;
-      background: #dbeafe;
-      color: #1d4ed8;
-      border: 1px solid #bfdbfe;
-    }
-
-    .news-source-time {
-      font-size: 10.5px;
-      color: #64748b;
-      font-weight: 500;
-    }
-
-    .news-item-title {
-      font-size: 13px;
-      font-weight: 700;
-      color: #0f172a;
-      margin-bottom: 4px;
-      line-height: 1.4;
-    }
-
-    .news-item-summary {
-      font-size: 11.5px;
-      color: #475569;
-      line-height: 1.45;
-      margin: 0;
-    }
-
-    /* Daily Route Map & Transit Panel Light CSS */
-    .route-map-card {
-      background: #ffffff !important;
-      backdrop-filter: blur(12px) !important;
-      -webkit-backdrop-filter: blur(12px) !important;
-      border: 1px solid #e2e8f0 !important;
-      border-radius: 20px !important;
-      padding: 22px !important;
-      box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.05) !important;
-    }
-
     .route-badge-pin {
       width: 28px;
       height: 28px;
@@ -1834,11 +1694,11 @@
                   🔄 Refresh
                 </button>
               </div>
-              <h3 style="margin:6px 0 14px 0; font-size:1.05rem; font-weight:700; color:#fff; display:flex; align-items:center; gap:6px;">
+              <h3 style="margin:6px 0 14px 0; font-size:1.05rem; font-weight:700; color:var(--text-heading); display:flex; align-items:center; gap:6px;">
                 📰 Vancouver Live Pulse & Events
               </h3>
               <div id="vancouver-news-feed" class="news-list-container">
-                <div style="font-size:12px; color:rgba(255,255,255,0.5); text-align:center; padding:16px;">Loading Vancouver news feed...</div>
+                <div style="font-size:12px; color:var(--text-sub); text-align:center; padding:16px;">Loading Vancouver news feed...</div>
               </div>
             </div>
           </div>
@@ -1928,12 +1788,12 @@
               <!-- Daily Itinerary Route & TransLink Transit Map Card -->
               <div id="daily-route-map-container" class="route-map-card" style="margin-top:20px;">
                 <div class="section-label">ROUTE & TRANSLINK</div>
-                <h3 style="margin:6px 0 12px 0; font-size:1.05rem; font-weight:700; color:#fff; display:flex; align-items:center; gap:6px;">
+                <h3 style="margin:6px 0 12px 0; font-size:1.05rem; font-weight:700; color:var(--text-heading); display:flex; align-items:center; gap:6px;">
                   🗺️ Daily Route & Transit Map
                 </h3>
                 <div id="daily-route-map" style="height: 320px; border-radius: 14px; border: 1px solid var(--glass-border); z-index: 1;"></div>
                 <div id="transit-routes-info" class="transit-info-panel" style="margin-top:14px;">
-                  <div style="font-size:12px; color:rgba(255,255,255,0.5); text-align:center; padding:12px;">Generate or load a plan to view daily route & TransLink transit advice.</div>
+                  <div style="font-size:12px; color:var(--text-sub); text-align:center; padding:12px;">Generate or load a plan to view daily route & TransLink transit advice.</div>
                 </div>
               </div>
             </div>
@@ -2349,9 +2209,8 @@
         const targetTab = btn.dataset.tab;
         document.getElementById(targetTab).classList.add("active");
 
-        if (targetTab === "tab-activities" && map) {
-          setTimeout(() => map.invalidateSize(), 200);
-        }
+        if (map) setTimeout(() => map.invalidateSize(), 200);
+        if (dailyRouteMap) setTimeout(() => dailyRouteMap.invalidateSize(), 200);
       });
     });
 
@@ -2463,8 +2322,8 @@
 
         pills.push(`
           <div class="outlook-pill ${iso === activeDate ? 'active' : ''}" onclick="setDateAndLoad('${iso}')">
-            <div style="font-weight:700; color:#fff; margin-bottom:2px; font-size:12px;">${dayLabel}</div>
-            <div style="font-size:11px; font-weight:600; color:${isRain ? '#FF9F0A' : '#30D158'}">${icon}</div>
+            <div style="font-weight:700; color:inherit; margin-bottom:2px; font-size:12px;">${dayLabel}</div>
+            <div style="font-size:11px; font-weight:600; color:${isRain ? '#d97706' : '#16a34a'}">${icon}</div>
           </div>
         `);
       }
@@ -2511,7 +2370,7 @@
       }
 
       if (!activities || !activities.length) {
-        infoPanel.innerHTML = `<div style="font-size:12px; color:rgba(255,255,255,0.5); text-align:center; padding:12px;">Generate or load a plan to view daily route & TransLink transit advice.</div>`;
+        infoPanel.innerHTML = `<div style="font-size:12px; color:var(--text-sub); text-align:center; padding:12px;">Generate or load a plan to view daily route & TransLink transit advice.</div>`;
         return;
       }
 
@@ -2560,7 +2419,7 @@
 
 
       if (activities.length < 2) {
-        infoPanel.innerHTML = `<div style="font-size:12px; color:rgba(255,255,255,0.6); padding:8px;">1 activity scheduled. Add more activities to generate transit routes.</div>`;
+        infoPanel.innerHTML = `<div style="font-size:12px; color:var(--text-sub); padding:8px;">1 activity scheduled. Add more activities to generate transit routes.</div>`;
         return;
       }
 
@@ -2633,14 +2492,14 @@
         return;
       }
 
-      summary.innerHTML = `📅 <strong>${esc(planData.date)}</strong> &nbsp;·&nbsp; Risk Level: <strong>${esc(planData.weather_risk_level)}</strong> &nbsp;·&nbsp; Total Cost: <strong>${formatMoney(planData.total_cost)}</strong><br><span style="font-size:12px; color:rgba(255,255,255,0.7); font-weight:400;">🤖 ${esc(planData.planning_summary)}</span>`;
+      summary.innerHTML = `📅 <strong>${esc(planData.date)}</strong> &nbsp;·&nbsp; Risk Level: <strong>${esc(planData.weather_risk_level)}</strong> &nbsp;·&nbsp; Total Cost: <strong>${formatMoney(planData.total_cost)}</strong><br><span style="font-size:12px; color:var(--text-sub); font-weight:400;">🤖 ${esc(planData.planning_summary)}</span>`;
 
       const itemsHtml = planData.activities.map((act, idx) => {
         let warning = "";
         if (act.rain_risk) {
           warning = `<div class="warning" role="alert" style="display:flex; flex-direction:column; align-items:flex-start;">
             <div><strong>☔ Rain Expected</strong> — ${esc(act.recommendation || "High chance of rain")}</div>
-            ${act.transit_advice ? `<div style="font-size:11.5px; color:#64D2FF; margin-top:6px; font-weight:500;">${esc(act.transit_advice)}</div>` : ''}
+            ${act.transit_advice ? `<div style="font-size:11.5px; color:#0369a1; margin-top:6px; font-weight:500;">${esc(act.transit_advice)}</div>` : ''}
           </div>`;
         } else if (act.recommendation) {
           warning = `<div class="warning ok" role="alert">
@@ -2722,7 +2581,7 @@
           }
           const note = w.source === "cached" ? " (cached offline forecast)" : "";
           const transitTipText = w.transit_advice || (w.rain_probability >= 0.5 ? "🚆 TransLink Transit Advice: High chance of rain. Take SkyTrain & use covered concourses to avoid outdoor walking." : "");
-          const transitTip = transitTipText ? `<div style="font-size:11.5px; color:#64D2FF; margin-top:8px; padding-top:6px; border-top:1px dashed rgba(255,255,255,0.1); width:100%; font-weight:500;">${esc(transitTipText)}</div>` : "";
+          const transitTip = transitTipText ? `<div style="font-size:11.5px; color:#0369a1; margin-top:8px; padding-top:6px; border-top:1px dashed #cbd5e1; width:100%; font-weight:500;">${esc(transitTipText)}</div>` : "";
 
           warning = `<div class="warning ${tone}" role="alert" style="display:flex; flex-direction:column; align-items:flex-start;">
                <div><strong>${esc(headline)}</strong> — ${esc(w.recommendation)}${esc(note)}</div>
@@ -2911,7 +2770,7 @@
       const barWidth = 44;
       const gap = (chartWidth - days.length * barWidth) / (days.length + 1);
 
-      let barsHtml = `<line x1="20" y1="170" x2="580" y2="170" stroke="rgba(255,255,255,0.1)" stroke-width="1" />`;
+      let barsHtml = `<line x1="20" y1="170" x2="580" y2="170" stroke="#e2e8f0" stroke-width="1" />`;
 
       days.forEach((day, i) => {
         const val = (day.total_cost || 0) * taxFactor * rate;
@@ -2925,8 +2784,8 @@
         barsHtml += `
           <g>
             <rect class="chart-bar" x="${x}" y="${y}" width="${barWidth}" height="${barH}" rx="6" fill="${fillColor}" />
-            <text x="${x + barWidth/2}" y="${y - 8}" text-anchor="middle" fill="#ffffff" font-size="11" font-weight="600">${symbol}${val.toFixed(0)}</text>
-            <text x="${x + barWidth/2}" y="190" text-anchor="middle" fill="rgba(255,255,255,0.5)" font-size="11">${dayLabel}</text>
+            <text x="${x + barWidth/2}" y="${y - 8}" text-anchor="middle" fill="#0f172a" font-size="11" font-weight="600">${symbol}${val.toFixed(0)}</text>
+            <text x="${x + barWidth/2}" y="190" text-anchor="middle" fill="#64748b" font-size="11">${dayLabel}</text>
           </g>
         `;
       });
@@ -2952,18 +2811,18 @@
 
       const rows = budget.days.map(day => `
         <tr class="${day.entry_count ? "" : "blank"}">
-          <td style="padding:12px 16px; border-bottom:1px solid rgba(255,255,255,0.08); color:var(--text-main);">${esc(day.date)}</td>
-          <td style="padding:12px 16px; border-bottom:1px solid rgba(255,255,255,0.08); text-align:right; color:var(--text-sub);">${esc(day.entry_count)}</td>
-          <td style="padding:12px 16px; border-bottom:1px solid rgba(255,255,255,0.08); text-align:right; color:var(--text-sub);">${esc(day.group_size)}</td>
-          <td style="padding:12px 16px; border-bottom:1px solid rgba(255,255,255,0.08); text-align:right; font-weight:700; color:var(--apple-teal);">${esc(formatMoney(day.total_cost))}</td>
+          <td style="padding:12px 16px; border-bottom:1px solid #e2e8f0; color:var(--text-main);">${esc(day.date)}</td>
+          <td style="padding:12px 16px; border-bottom:1px solid #e2e8f0; text-align:right; color:var(--text-sub);">${esc(day.entry_count)}</td>
+          <td style="padding:12px 16px; border-bottom:1px solid #e2e8f0; text-align:right; color:var(--text-sub);">${esc(day.group_size)}</td>
+          <td style="padding:12px 16px; border-bottom:1px solid #e2e8f0; text-align:right; font-weight:700; color:var(--apple-teal);">${esc(formatMoney(day.total_cost))}</td>
         </tr>
       `).join("");
 
       document.getElementById("budget-table").innerHTML = `
-        <div style="overflow-x:auto; border:1px solid var(--glass-border); border-radius:12px; background:rgba(255,255,255,0.02);">
+        <div style="overflow-x:auto; border:1px solid var(--glass-border); border-radius:12px; background:#ffffff;">
           <table style="width:100%; border-collapse:collapse; font-size:13.5px;">
             <thead>
-              <tr style="background:rgba(255,255,255,0.05); font-size:12px; font-weight:700; color:var(--text-sub); text-transform:uppercase; border-bottom:1px solid rgba(255,255,255,0.1);">
+              <tr style="background:#f8fafc; font-size:12px; font-weight:700; color:var(--text-sub); text-transform:uppercase; border-bottom:1px solid #e2e8f0;">
                 <th style="padding:12px 16px; text-align:left;">Date (${esc(budget.start_date)} → ${esc(budget.end_date)})</th>
                 <th style="padding:12px 16px; text-align:right;">Entries</th>
                 <th style="padding:12px 16px; text-align:right;">Group Size</th>
@@ -2972,7 +2831,7 @@
             </thead>
             <tbody>${rows}</tbody>
             <tfoot>
-              <tr class="total-row" style="background:rgba(255,255,255,0.08); font-weight:700; color:#ffffff; border-top:1px solid rgba(255,255,255,0.15);">
+              <tr class="total-row" style="background:#f1f5f9; font-weight:700; color:var(--text-heading); border-top:1px solid #e2e8f0;">
                 <td colspan="3" style="padding:14px 16px;">7-Day Estimated Total</td>
                 <td style="padding:14px 16px; text-align:right; font-size:15px; color:var(--apple-green);">${esc(formatMoney(budget.total_cost))}</td>
               </tr>
@@ -3324,8 +3183,15 @@
     });
 
     loadActivities();
+    loadItinerary();
     loadBudget();
     loadNews();
+
+    // Redraw Leaflet map containers on scroll into view
+    window.addEventListener('scroll', () => {
+      if (map) map.invalidateSize();
+      if (dailyRouteMap) dailyRouteMap.invalidateSize();
+    }, { passive: true });
   </script>
 
 </body>
