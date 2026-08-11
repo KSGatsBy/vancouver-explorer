@@ -1098,6 +1098,67 @@
       line-height: 1.45;
       margin: 0;
     }
+
+    /* Daily Route Map & Transit Panel CSS */
+    .route-map-card {
+      background: rgba(15, 23, 42, 0.7) !important;
+      backdrop-filter: blur(12px) !important;
+      -webkit-backdrop-filter: blur(12px) !important;
+      border: 1px solid rgba(255, 255, 255, 0.12) !important;
+      border-radius: 20px !important;
+      padding: 22px !important;
+    }
+
+    .route-badge-pin {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+      color: #ffffff;
+      font-weight: 800;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid #ffffff;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    }
+
+    .transit-info-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .transit-segment {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .transit-segment-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+      font-weight: 700;
+      color: #64D2FF;
+    }
+
+    .transit-segment-title {
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 2px;
+      font-size: 12.5px;
+    }
+
+    .transit-segment-desc {
+      font-size: 11.5px;
+      color: rgba(255, 255, 255, 0.65);
+    }
   </style>
 </head>
 <body>
@@ -1303,19 +1364,33 @@
               </div>
             </section>
 
-            <!-- Right Column: Add Entry Sidebar -->
-            <section class="sf-card sticky-sidebar" aria-labelledby="add-entry-heading">
-              <div class="section-label">ADD TO DAY</div>
-              <h2 id="add-entry-heading">Schedule Activity</h2>
-              <form id="entry-form">
-                <label>Select Activity
-                  <select name="activity_id" id="activity-select" required></select>
-                </label>
-                <label>Notes & Preparation <textarea name="notes" rows="3" placeholder="Camera gear, parking reservations..."></textarea></label>
-                <button type="submit" style="width: 100%;">+ Add Entry to Day</button>
-                <div id="entry-status" class="status" role="status"></div>
-              </form>
-            </section>
+            <!-- Right Column: Add Entry Sidebar & Daily Route Map -->
+            <div class="sticky-sidebar">
+              <section class="sf-card" aria-labelledby="add-entry-heading">
+                <div class="section-label">ADD TO DAY</div>
+                <h2 id="add-entry-heading">Schedule Activity</h2>
+                <form id="entry-form">
+                  <label>Select Activity
+                    <select name="activity_id" id="activity-select" required></select>
+                  </label>
+                  <label>Notes & Preparation <textarea name="notes" rows="3" placeholder="Camera gear, parking reservations..."></textarea></label>
+                  <button type="submit" style="width: 100%;">+ Add Entry to Day</button>
+                  <div id="entry-status" class="status" role="status"></div>
+                </form>
+              </section>
+
+              <!-- Daily Itinerary Route & TransLink Transit Map Card -->
+              <div id="daily-route-map-container" class="route-map-card" style="margin-top:20px;">
+                <div class="section-label">ROUTE & TRANSLINK</div>
+                <h3 style="margin:6px 0 12px 0; font-size:1.05rem; font-weight:700; color:#fff; display:flex; align-items:center; gap:6px;">
+                  🗺️ Daily Route & Transit Map
+                </h3>
+                <div id="daily-route-map" style="height: 320px; border-radius: 14px; border: 1px solid var(--glass-border); z-index: 1;"></div>
+                <div id="transit-routes-info" class="transit-info-panel" style="margin-top:14px;">
+                  <div style="font-size:12px; color:rgba(255,255,255,0.5); text-align:center; padding:12px;">Generate or load a plan to view daily route & TransLink transit advice.</div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -1860,6 +1935,140 @@
       loadItinerary();
     };
 
+    // Leaflet Daily Itinerary Route Map & TransLink Advice
+    let dailyRouteMap = null;
+    let dailyRouteMarkers = [];
+    let dailyRoutePolyline = null;
+
+    function renderDailyRouteMap(activities = [], weatherList = []) {
+      const mapEl = document.getElementById("daily-route-map");
+      const infoPanel = document.getElementById("transit-routes-info");
+      if (!mapEl || !infoPanel) return;
+
+      if (!dailyRouteMap) {
+        dailyRouteMap = L.map("daily-route-map").setView([49.2827, -123.1207], 11);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+          attribution: '&copy; CARTO & OpenStreetMap',
+          maxZoom: 18
+        }).addTo(dailyRouteMap);
+
+        setTimeout(() => {
+          if (dailyRouteMap) dailyRouteMap.invalidateSize();
+        }, 300);
+      }
+
+      dailyRouteMarkers.forEach(m => dailyRouteMap.removeLayer(m));
+      dailyRouteMarkers = [];
+      if (dailyRoutePolyline) {
+        dailyRouteMap.removeLayer(dailyRoutePolyline);
+        dailyRoutePolyline = null;
+      }
+
+      if (!activities || !activities.length) {
+        infoPanel.innerHTML = `<div style="font-size:12px; color:rgba(255,255,255,0.5); text-align:center; padding:12px;">Generate or load a plan to view daily route & TransLink transit advice.</div>`;
+        return;
+      }
+
+      const weatherMap = Object.fromEntries(weatherList.map(w => [w.activity_id, w]));
+      const latLngs = [];
+
+      activities.forEach((act, idx) => {
+        const lat = act.lat || act.latitude || 49.2827;
+        const lng = act.lng || act.longitude || -123.1207;
+        latLngs.push([lat, lng]);
+
+        const customIcon = L.divIcon({
+          className: 'custom-route-badge',
+          html: `<div class="route-badge-pin">${idx + 1}</div>`,
+          iconSize: [28, 28],
+          iconAnchor: [14, 14],
+        });
+
+        const marker = L.marker([lat, lng], { icon: customIcon }).addTo(dailyRouteMap);
+        const w = weatherMap[act.id];
+        const rec = w ? `<div style="font-size:11px; color:#ffe0b2; margin-top:4px;">☔ ${esc(w.recommendation)}</div>` : "";
+
+        marker.bindPopup(`
+          <div style="font-family:'Plus Jakarta Sans', sans-serif; padding:4px;">
+            <strong style="font-size:13px; color:#ffffff;">#${idx + 1} ${esc(act.name)}</strong>
+            <div style="font-size:11px; color:#a5b4fc; margin-top:2px;">📍 ${esc(act.location || 'Vancouver')} · 💳 ${esc(formatMoney(act.cost || 0))}</div>
+            ${rec}
+          </div>
+        `);
+        dailyRouteMarkers.push(marker);
+      });
+
+      if (latLngs.length > 1) {
+        dailyRoutePolyline = L.polyline(latLngs, {
+          color: '#3b82f6',
+          weight: 4,
+          dashArray: '8, 8',
+          opacity: 0.85
+        }).addTo(dailyRouteMap);
+
+        dailyRouteMap.fitBounds(dailyRoutePolyline.getBounds(), { padding: [35, 35] });
+      } else if (latLngs.length === 1) {
+        dailyRouteMap.setView(latLngs[0], 13);
+      }
+
+      if (activities.length < 2) {
+        infoPanel.innerHTML = `<div style="font-size:12px; color:rgba(255,255,255,0.6); padding:8px;">1 activity scheduled. Add more activities to generate transit routes.</div>`;
+        return;
+      }
+
+      const segmentsHtml = [];
+      for (let i = 0; i < activities.length - 1; i++) {
+        const from = activities[i];
+        const to = activities[i + 1];
+
+        let transitIcon = "🚌";
+        let mode = "TransLink Bus";
+        let duration = "~25 mins";
+        let routeDetails = "Take TransLink Direct Bus / SkyTrain connection.";
+
+        const fromLoc = (from.location || from.name || "").toLowerCase();
+        const toLoc = (to.location || to.name || "").toLowerCase();
+
+        if (fromLoc.includes("north vancouver") || toLoc.includes("north vancouver") || fromLoc.includes("capilano") || toLoc.includes("capilano") || fromLoc.includes("grouse") || toLoc.includes("grouse")) {
+          transitIcon = "🛳️";
+          mode = "SeaBus + Bus Route #236 / #246";
+          duration = "~30 mins";
+          routeDetails = "Take SeaBus from Waterfront Station across Burrard Inlet, connect to North Shore Bus.";
+        } else if (fromLoc.includes("ubc") || toLoc.includes("ubc")) {
+          transitIcon = "🚌";
+          mode = "Express Bus #99 B-Line";
+          duration = "~35 mins";
+          routeDetails = "Take 99 B-Line Express along Broadway corridor directly to destination.";
+        } else if (fromLoc.includes("kitsilano") || toLoc.includes("kitsilano")) {
+          transitIcon = "🚌";
+          mode = "TransLink Bus #4 / #14";
+          duration = "~20 mins";
+          routeDetails = "Direct coastal bus connection across Burrard Bridge.";
+        } else {
+          transitIcon = "🚊";
+          mode = "SkyTrain (Expo / Canada Line)";
+          duration = "~15 mins";
+          routeDetails = "Fast rapid transit connection between Downtown stations.";
+        }
+
+        segmentsHtml.push(`
+          <div class="transit-segment">
+            <div class="transit-segment-head">
+              <span>Segment ${i + 1}: #${i + 1} ➔ #${i + 2}</span>
+              <span>${duration}</span>
+            </div>
+            <div class="transit-segment-title">${transitIcon} ${mode}</div>
+            <div class="transit-segment-desc">${esc(from.name)} ➔ ${esc(to.name)}<br>${routeDetails}</div>
+          </div>
+        `);
+      }
+
+      infoPanel.innerHTML = segmentsHtml.join("");
+      setTimeout(() => {
+        if (dailyRouteMap) dailyRouteMap.invalidateSize();
+      }, 250);
+    }
+
     function renderDailyTimeline(planData) {
       const container = document.getElementById("itinerary-entries");
       const summary = document.getElementById("itinerary-summary");
@@ -1872,6 +2081,7 @@
             <div class="empty-sub">Try selecting another preference or increasing your budget.</div>
           </div>
         `;
+        renderDailyRouteMap([]);
         return;
       }
 
@@ -1897,7 +2107,6 @@
             <div class="timeline-dot ${act.rain_risk ? 'rain' : 'ok'}"></div>
             <article class="entry-card">
               <img src="${esc(coverImg)}" alt="${esc(act.name)}" class="activity-card-img" onerror="this.onerror=null; this.src=FALLBACK_SVG;" />
-
               <div class="timeline-time-badge">${esc(act.time_slot)}</div>
               <div class="card-head">
                 <strong>#${idx+1} ${esc(act.name)}</strong>
@@ -1913,6 +2122,7 @@
       }).join("");
 
       container.innerHTML = `<div class="timeline-container">${itemsHtml}</div>`;
+      renderDailyRouteMap(planData.activities);
     }
 
     // Itinerary & Timeline Rendering
@@ -1939,6 +2149,7 @@
           </div>
         `;
         isRaining = false;
+        renderDailyRouteMap([]);
         return;
       }
 
@@ -1983,7 +2194,6 @@
             <div class="timeline-dot ${dotClass}"></div>
             <article class="entry-card">
               <img src="${esc(coverImg)}" alt="${esc(entry.activity.name)}" class="activity-card-img" onerror="this.onerror=null; this.src=FALLBACK_SVG;" />
-
               <div class="timeline-time-badge">${slotName}</div>
               <div class="card-head">
                 <strong>#${idx+1} ${esc(entry.activity.name)}</strong>
@@ -2018,6 +2228,7 @@
 
       const itineraryActivities = day.entries.map(e => e.activity);
       updateMapMarkers(itineraryActivities, weather, true);
+      renderDailyRouteMap(itineraryActivities, weather);
     }
 
     async function loadItinerary() {
