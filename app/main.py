@@ -9,8 +9,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from app.db import init_db
-from app.routers import activities, budget, itinerary
+from app.routers import activities, budget, itinerary, news
 from app.services.mcp_client import close_mcp_client, init_mcp_client
+
 
 logger = logging.getLogger("vancouver_explorer")
 
@@ -90,6 +91,8 @@ app.add_middleware(
 app.include_router(activities.router)
 app.include_router(itinerary.router)
 app.include_router(budget.router)
+app.include_router(news.router)
+
 
 
 @app.get("/health")

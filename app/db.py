@@ -43,8 +43,9 @@ def get_db_path() -> Path:
 
 @contextmanager
 def get_connection():
-    conn = sqlite3.connect(get_db_path(), timeout=10.0)
+    conn = sqlite3.connect(get_db_path(), timeout=15.0)
     conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA foreign_keys = ON;")
     try:
         yield conn
     finally:
@@ -90,10 +91,15 @@ def seed_initial_data(force: bool = False) -> int:
 
 def init_db() -> None:
     with get_connection() as conn:
+        try:
+            conn.execute("PRAGMA journal_mode = WAL;")
+        except Exception:
+            pass
         conn.executescript(SCHEMA)
         conn.commit()
     seed_initial_data()
     cleanup_duplicates()
+
 
 
 def cleanup_duplicates() -> int:

@@ -164,6 +164,14 @@ class PlanGenerateRequest(BaseModel):
     def validate_date(cls, value: str) -> str:
         return validate_iso_date(value)
 
+    @field_validator("preference")
+    @classmethod
+    def validate_preference(cls, value: str) -> str:
+        pref = (value or "").strip().lower()
+        allowed = {"outdoor", "museum", "food", "free"}
+        return pref if pref in allowed else "outdoor"
+
+
 
 class PlanActivityDetail(BaseModel):
     time_slot: str
@@ -182,6 +190,16 @@ class PlanGenerateResponse(BaseModel):
     weather_risk_level: str
     planning_summary: str
     activities: list[PlanActivityDetail]
+
+
+class NewsItemResponse(BaseModel):
+    title: str
+    summary: str
+    source: str
+    url: str
+    category: str
+    published_at: str
+
 
 
 
