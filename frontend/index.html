@@ -1970,12 +1970,12 @@
       }
 
       const weatherMap = Object.fromEntries(weatherList.map(w => [w.activity_id, w]));
-      const latLngs = [];
+      const waypoints = [];
 
       activities.forEach((act, idx) => {
-        const lat = act.lat || act.latitude || 49.2827;
-        const lng = act.lng || act.longitude || -123.1207;
-        latLngs.push([lat, lng]);
+        const lat = Number(act.lat ?? act.latitude ?? 49.2827);
+        const lng = Number(act.lng ?? act.longitude ?? -123.1207);
+        waypoints.push([lat, lng]);
 
         const customIcon = L.divIcon({
           className: 'custom-route-badge',
@@ -1987,10 +1987,11 @@
         const marker = L.marker([lat, lng], { icon: customIcon }).addTo(dailyRouteMap);
         const w = weatherMap[act.id];
         const rec = w ? `<div style="font-size:11px; color:#ffe0b2; margin-top:4px;">☔ ${esc(w.recommendation)}</div>` : "";
+        const slotLabel = act.time_slot ? ` (${esc(act.time_slot)})` : "";
 
         marker.bindPopup(`
           <div style="font-family:'Plus Jakarta Sans', sans-serif; padding:4px;">
-            <strong style="font-size:13px; color:#ffffff;">#${idx + 1} ${esc(act.name)}</strong>
+            <strong style="font-size:13px; color:#ffffff;">#${idx + 1} ${esc(act.name)}${slotLabel}</strong>
             <div style="font-size:11px; color:#a5b4fc; margin-top:2px;">📍 ${esc(act.location || 'Vancouver')} · 💳 ${esc(formatMoney(act.cost || 0))}</div>
             ${rec}
           </div>
@@ -1998,18 +1999,19 @@
         dailyRouteMarkers.push(marker);
       });
 
-      if (latLngs.length > 1) {
-        dailyRoutePolyline = L.polyline(latLngs, {
+      if (waypoints.length > 1) {
+        dailyRoutePolyline = L.polyline(waypoints, {
           color: '#3b82f6',
           weight: 4,
-          dashArray: '8, 8',
+          dashArray: '6, 8',
           opacity: 0.85
         }).addTo(dailyRouteMap);
 
-        dailyRouteMap.fitBounds(dailyRoutePolyline.getBounds(), { padding: [35, 35] });
-      } else if (latLngs.length === 1) {
-        dailyRouteMap.setView(latLngs[0], 13);
+        dailyRouteMap.fitBounds(dailyRoutePolyline.getBounds(), { padding: [40, 40] });
+      } else if (waypoints.length === 1) {
+        dailyRouteMap.setView(waypoints[0], 13);
       }
+
 
       if (activities.length < 2) {
         infoPanel.innerHTML = `<div style="font-size:12px; color:rgba(255,255,255,0.6); padding:8px;">1 activity scheduled. Add more activities to generate transit routes.</div>`;

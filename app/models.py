@@ -179,9 +179,13 @@ class PlanActivityDetail(BaseModel):
     name: str
     cost: float
     is_outdoor: bool
+    location: str = ""
+    lat: float | None = None
+    lng: float | None = None
     rain_risk: bool = False
     recommendation: str = ""
     transit_advice: str = ""
+
 
 
 class PlanGenerateResponse(BaseModel):

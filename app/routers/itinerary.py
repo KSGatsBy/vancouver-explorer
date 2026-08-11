@@ -307,11 +307,15 @@ async def generate_plan(body: PlanGenerateRequest):
                     name=sel["name"],
                     cost=sel.get("cost_per_person", 0.0),
                     is_outdoor=is_out,
+                    location=matched_act["location"] if matched_act else "Vancouver",
+                    lat=matched_act["lat"] if matched_act else 49.2827,
+                    lng=matched_act["lng"] if matched_act else -123.1207,
                     rain_risk=rain_risk,
                     recommendation=w.get("recommendation", "Plan flexibly"),
                     transit_advice=w.get("transit_advice", ""),
                 )
             )
+
 
         return PlanGenerateResponse(
             date=date,
