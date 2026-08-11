@@ -10,6 +10,9 @@ from app.models import (
     ItineraryEntryCreate,
     ItineraryEntryPatch,
     ItineraryEntryResponse,
+    PlanActivityDetail,
+    PlanGenerateRequest,
+    PlanGenerateResponse,
     SmartSwapResponse,
     WeatherAdvisoryResponse,
     WeatherSuggestion,
@@ -19,6 +22,7 @@ from app.services.cost import compute_total_cost
 from app.services import llm_engine, mcp_client
 
 router = APIRouter(tags=["itinerary"])
+
 
 
 def _activity_response(row) -> ActivityResponse:
@@ -243,6 +247,80 @@ async def ai_plan_itinerary(date: str, body: AIPlanRequest):
 
         ai_plan_result["updated_itinerary"] = _build_day_response(conn, date)
         return AIPlanResponse(**ai_plan_result)
+
+
+@router.post("/api/plan/generate", response_model=PlanGenerateResponse)
+async def generate_plan(body: PlanGenerateRequest):
+    date = body.date
+    with get_connection() as conn:
+        conn.execute(
+            """
+            INSERT INTO itinerary_days (date, group_size) VALUES (?, ?)
+            ON CONFLICT(date) DO UPDATE SET group_size = excluded.group_size
+            """,
+            (date, body.group_size),
+        )
+
+        try:
+            suggestions = await mcp_client.suggest_indoor_or_outdoor(date)
+        except Exception:
+            suggestions = []
+
+        activities = conn.execute("SELECT * FROM activities").fetchall()
+        parsed_activities = [row_to_activity(a) for a in activities]
+
+        ai_plan_result = llm_engine.run_ai_plan(
+            date=date,
+            max_budget=body.max_budget,
+            preference=body.preference,
+            group_size=body.group_size,
+            weather_data=suggestions,
+            activity_library=parsed_activities,
+        )
+
+        selected = ai_plan_result.get("selected_activities", [])
+        conn.execute("DELETE FROM itinerary_entries WHERE day_id = ?", (date,))
+        for a in selected:
+            conn.execute(
+                "INSERT INTO itinerary_entries (day_id, activity_id, notes) VALUES (?, ?, ?)",
+                (date, a["id"], f"🤖 AI Planned ({body.preference.capitalize()})"),
+            )
+        conn.commit()
+
+        time_slots = ["Morning Slot", "Afternoon Slot", "Evening Slot"]
+        weather_map = {item.get("activity_id"): item for item in suggestions}
+
+        activities_details = []
+        for idx, sel in enumerate(selected):
+            act_id = sel["id"]
+            matched_act = next((a for a in parsed_activities if a["id"] == act_id), None)
+            w = weather_map.get(act_id, {})
+            rain_prob = w.get("rain_probability", 0.0)
+            is_out = matched_act["is_outdoor"] if matched_act else False
+            rain_risk = is_out and (rain_prob >= 0.5)
+
+            slot_name = time_slots[idx % len(time_slots)]
+            activities_details.append(
+                PlanActivityDetail(
+                    time_slot=slot_name,
+                    id=act_id,
+                    name=sel["name"],
+                    cost=sel.get("cost_per_person", 0.0),
+                    is_outdoor=is_out,
+                    rain_risk=rain_risk,
+                    recommendation=w.get("recommendation", "Plan flexibly"),
+                    transit_advice=w.get("transit_advice", ""),
+                )
+            )
+
+        return PlanGenerateResponse(
+            date=date,
+            total_cost=ai_plan_result.get("total_cost", 0.0),
+            weather_risk_level=ai_plan_result.get("weather_risk_level", "Low"),
+            planning_summary=ai_plan_result.get("planning_summary", "Plan generated."),
+            activities=activities_details,
+        )
+
 
 
 

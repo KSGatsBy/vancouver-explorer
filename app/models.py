@@ -153,3 +153,35 @@ class WeatherAdvisoryResponse(BaseModel):
     suggestions: list[WeatherSuggestion] = Field(default_factory=list)
 
 
+class PlanGenerateRequest(BaseModel):
+    date: str
+    group_size: int = Field(default=1, ge=1)
+    preference: str = "outdoor"
+    max_budget: float = 100.0
+
+    @field_validator("date")
+    @classmethod
+    def validate_date(cls, value: str) -> str:
+        return validate_iso_date(value)
+
+
+class PlanActivityDetail(BaseModel):
+    time_slot: str
+    id: int
+    name: str
+    cost: float
+    is_outdoor: bool
+    rain_risk: bool = False
+    recommendation: str = ""
+    transit_advice: str = ""
+
+
+class PlanGenerateResponse(BaseModel):
+    date: str
+    total_cost: float
+    weather_risk_level: str
+    planning_summary: str
+    activities: list[PlanActivityDetail]
+
+
+

@@ -1074,7 +1074,7 @@
 
               <div class="filter-bar" style="flex-wrap: wrap;">
                 <label style="flex: 1 1 10rem; margin-top:0;">Date 
-                  <input id="itinerary-date" type="date" value="2026-08-01">
+                  <input id="itinerary-date" type="date">
                 </label>
                 <label style="flex: 0 1 6rem; margin-top:0;">Group Size 
                   <input id="itinerary-group-size" type="number" min="1" value="1">
@@ -1301,9 +1301,23 @@
       return res.json();
     }
 
-    function currentDate() {
-      return document.getElementById("itinerary-date").value;
+    function initDynamicDate() {
+      const today = new Date();
+      const todayIso = today.toISOString().split("T")[0];
+      const el = document.getElementById("itinerary-date") || document.getElementById("schedule-date-input");
+      if (el) {
+        if (!el.value) el.value = todayIso;
+        el.setAttribute("min", todayIso);
+      }
+      return el ? el.value : todayIso;
     }
+
+    function currentDate() {
+      const el = document.getElementById("itinerary-date") || document.getElementById("schedule-date-input");
+      if (el && el.value) return el.value;
+      return initDynamicDate();
+    }
+
 
     // Dynamic Weather Canvas Background
     const canvas = document.getElementById("weather-canvas");
@@ -1585,15 +1599,16 @@
     }
 
     // 7-Day Weather Outlook Horizon Bar
-    function renderWeatherOutlook() {
+    function generateWeeklyDateBar() {
       const bar = document.getElementById("weather-outlook-bar");
+      if (!bar) return;
       const activeDate = currentDate();
-      const base = new Date(activeDate || "2026-08-01");
+      const today = new Date();
 
       const pills = [];
       for (let i = 0; i < 7; i++) {
-        const d = new Date(base);
-        d.setDate(base.getDate() + i);
+        const d = new Date(today);
+        d.setDate(today.getDate() + i);
         const iso = d.toISOString().split("T")[0];
         const dayLabel = d.toLocaleDateString("en-US", { weekday: "short", month: "numeric", day: "numeric" });
         const isRain = i % 2 === 1;
@@ -1609,10 +1624,66 @@
       bar.innerHTML = pills.join("");
     }
 
+    function renderWeatherOutlook() {
+      generateWeeklyDateBar();
+    }
+
     window.setDateAndLoad = function(iso) {
-      document.getElementById("itinerary-date").value = iso;
+      const el = document.getElementById("itinerary-date") || document.getElementById("schedule-date-input");
+      if (el) el.value = iso;
       loadItinerary();
     };
+
+    function renderDailyTimeline(planData) {
+      const container = document.getElementById("itinerary-entries");
+      const summary = document.getElementById("itinerary-summary");
+
+      if (!planData || !planData.activities || !planData.activities.length) {
+        container.innerHTML = `
+          <div class="empty-placeholder">
+            <div class="empty-icon">📅</div>
+            <div class="empty-title">No Activities Generated</div>
+            <div class="empty-sub">Try selecting another preference or increasing your budget.</div>
+          </div>
+        `;
+        return;
+      }
+
+      summary.innerHTML = `📅 <strong>${esc(planData.date)}</strong> &nbsp;·&nbsp; Risk Level: <strong>${esc(planData.weather_risk_level)}</strong> &nbsp;·&nbsp; Total Cost: <strong>${formatMoney(planData.total_cost)}</strong><br><span style="font-size:12px; color:rgba(255,255,255,0.7); font-weight:400;">🤖 ${esc(planData.planning_summary)}</span>`;
+
+      const itemsHtml = planData.activities.map((act, idx) => {
+        let warning = "";
+        if (act.rain_risk) {
+          warning = `<div class="warning" role="alert" style="display:flex; flex-direction:column; align-items:flex-start;">
+            <div><strong>☔ Rain Expected</strong> — ${esc(act.recommendation || "High chance of rain")}</div>
+            ${act.transit_advice ? `<div style="font-size:11.5px; color:#64D2FF; margin-top:6px; font-weight:500;">${esc(act.transit_advice)}</div>` : ''}
+          </div>`;
+        } else if (act.recommendation) {
+          warning = `<div class="warning ok" role="alert">
+            <div><strong>☀️ Weather Clear</strong> — ${esc(act.recommendation)}</div>
+          </div>`;
+        }
+
+        return `
+          <div class="timeline-item">
+            <div class="timeline-dot ${act.rain_risk ? 'rain' : 'ok'}"></div>
+            <article class="entry-card">
+              <div class="timeline-time-badge">${esc(act.time_slot)}</div>
+              <div class="card-head">
+                <strong>#${idx+1} ${esc(act.name)}</strong>
+              </div>
+              <div class="sf-badges" style="margin-top:8px;">
+                <span class="badge-pill cost">${esc(formatMoney(act.cost))}</span>
+                <span class="badge-pill ${act.is_outdoor ? "outdoor" : "indoor"}">${act.is_outdoor ? "🌲 Outdoor" : "🏛️ Indoor"}</span>
+              </div>
+              ${warning}
+            </article>
+          </div>
+        `;
+      }).join("");
+
+      container.innerHTML = `<div class="timeline-container">${itemsHtml}</div>`;
+    }
 
     // Itinerary & Timeline Rendering
     function renderItinerary(day, weather = []) {
@@ -1718,7 +1789,7 @@
     async function loadItinerary() {
       const date = currentDate();
       if (!date) return;
-      renderWeatherOutlook();
+      generateWeeklyDateBar();
       const summary = document.getElementById("itinerary-summary");
       summary.textContent = "Fetching itinerary & MCP forecast...";
       try {
@@ -1752,7 +1823,11 @@
       document.getElementById("ai-planner-dialog").showModal();
     });
 
-    document.getElementById("cancel-ai-planner").addEventListener("click", () => {
+    document.getElementById("ai-planner-btn")?.addEventListener("click", () => {
+      document.getElementById("ai-planner-dialog").showModal();
+    });
+
+    document.getElementById("cancel-ai-planner")?.addEventListener("click", () => {
       document.getElementById("ai-planner-dialog").close();
     });
 
@@ -1762,25 +1837,28 @@
       if (!date) return;
 
       const fd = new FormData(e.target);
+      const groupSize = Number(document.getElementById("itinerary-group-size")?.value || 1);
       const payload = {
-        preference: fd.get("preference"),
-        max_budget: Number(fd.get("max_budget") || 50),
+        date: date,
+        group_size: groupSize,
+        preference: fd.get("preference") || "outdoor",
+        max_budget: Number(fd.get("max_budget") || 100),
       };
 
       const submitBtn = e.target.querySelector('button[type="submit"]');
       const origText = submitBtn.innerHTML;
       submitBtn.disabled = true;
-      submitBtn.innerHTML = "⚡ Generating & Applying...";
+      submitBtn.innerHTML = "⚡ Generating Plan...";
 
       try {
-        const res = await api(`/itinerary/${date}/ai-plan`, {
+        const planData = await api(`/api/plan/generate`, {
           method: "POST",
           body: JSON.stringify(payload),
         });
         document.getElementById("ai-planner-dialog").close();
-        const summaryMsg = res.planning_summary || "AI Smart Plan generated and applied.";
-        setStatus("entry-status", `🤖 AI Plan (${res.weather_risk_level || 'Low'} Risk): ${summaryMsg}`, "ok");
-        await loadItinerary();
+        setStatus("entry-status", `🤖 AI Plan (${planData.weather_risk_level || 'Low'} Risk): ${planData.planning_summary}`, "ok");
+        renderDailyTimeline(planData);
+        await loadBudget();
       } catch (err) {
         setStatus("ai-planner-status", err.message, "error");
       } finally {

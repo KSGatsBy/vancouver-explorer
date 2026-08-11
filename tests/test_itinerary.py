@@ -153,5 +153,30 @@ def test_ai_plan_itinerary(client):
     assert len(data["updated_itinerary"]["entries"]) > 0
 
 
+def test_api_plan_generate(client):
+    client.post(
+        "/activities",
+        json={"name": "Vancouver Art Gallery", "location": "Downtown", "cost": 25.0, "is_outdoor": False, "tags": ["museum", "art"]},
+    )
+    res = client.post(
+        "/api/plan/generate",
+        json={
+            "date": "2026-08-15",
+            "group_size": 2,
+            "preference": "museum",
+            "max_budget": 150.0,
+        },
+    )
+    assert res.status_code == 200
+    data = res.json()
+    assert data["date"] == "2026-08-15"
+    assert "planning_summary" in data
+    assert len(data["activities"]) > 0
+    assert "time_slot" in data["activities"][0]
+
+
+
+
+
 
 
